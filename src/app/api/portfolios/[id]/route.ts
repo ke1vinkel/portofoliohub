@@ -14,7 +14,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, description, is_public } = await req.json();
+    const { title, description, is_public, theme_config } = await req.json();
 
     if (is_public === 1) {
       await turso.execute({
@@ -24,8 +24,21 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     await turso.execute({
-      sql: `UPDATE portfolios SET title = ?, description = ?, is_public = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`,
-      args: [title, description || '', is_public ? 1 : 0, id, userId],
+      sql: `UPDATE portfolios SET 
+        title = COALESCE(?, title), 
+        description = COALESCE(?, description), 
+        is_public = COALESCE(?, is_public), 
+        theme_config = COALESCE(?, theme_config),
+        updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ? AND user_id = ?`,
+      args: [
+        title, 
+        description !== undefined ? description : null, 
+        is_public !== undefined ? (is_public ? 1 : 0) : null, 
+        theme_config !== undefined ? JSON.stringify(theme_config) : null,
+        id, 
+        userId
+      ],
     });
 
     return NextResponse.json({ success: true });

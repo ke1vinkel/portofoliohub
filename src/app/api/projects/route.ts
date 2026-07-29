@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const portfolioId = body.portfolio_id || body.portfolio;
-    const { title, description, image, github_url, live_url, technologies, featured, link_type, category, embed_url, links } = body;
+    const { title, description, detailed_description, image, images, github_url, live_url, technologies, featured, link_type, category, embed_url, links } = body;
 
     if (!portfolioId || !title) {
       return NextResponse.json({ error: 'Portfolio ID and Title are required' }, { status: 400 });
@@ -23,14 +23,16 @@ export async function POST(req: Request) {
 
     await turso.execute({
       sql: `INSERT INTO projects (
-        id, portfolio_id, title, description, image, github_url, live_url, technologies, featured, link_type, category, embed_url, links
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, portfolio_id, title, description, detailed_description, image, images, github_url, live_url, technologies, featured, link_type, category, embed_url, links
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         id,
         portfolioId,
         title,
         description || '',
+        detailed_description || null,
         image || null,
+        JSON.stringify(images || []),
         github_url || null,
         live_url || null,
         JSON.stringify(technologies || []),
@@ -58,7 +60,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, title, description, image, github_url, live_url, technologies, featured, link_type, category, embed_url, links } = body;
+    const { id, title, description, detailed_description, image, images, github_url, live_url, technologies, featured, link_type, category, embed_url, links } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
@@ -68,7 +70,9 @@ export async function PUT(req: Request) {
       sql: `UPDATE projects SET
         title = COALESCE(?, title),
         description = COALESCE(?, description),
+        detailed_description = ?,
         image = ?,
+        images = COALESCE(?, images),
         github_url = ?,
         live_url = ?,
         technologies = COALESCE(?, technologies),
@@ -81,7 +85,9 @@ export async function PUT(req: Request) {
       args: [
         title,
         description,
+        detailed_description !== undefined ? detailed_description : null,
         image !== undefined ? image : null,
+        images !== undefined ? JSON.stringify(images) : null,
         github_url !== undefined ? github_url : null,
         live_url !== undefined ? live_url : null,
         technologies !== undefined ? JSON.stringify(technologies) : null,

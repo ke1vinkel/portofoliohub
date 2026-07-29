@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
 
 export default function LoginPage() {
-  const { login, isLoggedIn, currentUser, theme, toggleTheme } = usePortfolio();
+  const { login, isLoggedIn, currentUser } = usePortfolio();
   const router = useRouter();
 
   const [username, setUsername] = useState('');
@@ -55,48 +55,28 @@ export default function LoginPage() {
       
       {/* Styles Injected Locally for Perfect Theme Cohesion */}
       <style dangerouslySetInnerHTML={{ __html: `
-        :root {
-          --bg-body: var(--bg);
-          --bg-surface: var(--surface);
-          --bg-surface-solid: var(--surface-alt);
-          --bg-card: var(--surface-card);
-          --border-color: var(--border);
-          --text-primary: var(--text);
-          --text-secondary: var(--text-muted);
-          --accent: var(--accent);
-          --accent-hover: var(--accent-hover);
-          --accent-light: var(--accent-light);
-          --border-radius-outer: var(--radius);
-          --border-radius-inner: var(--radius-inner);
-        }
-
-        [data-theme="dark"] {
-          --bg-body: var(--bg);
-          --bg-surface: var(--surface);
-          --bg-surface-solid: var(--surface-alt);
-          --bg-card: var(--surface-card);
-          --border-color: var(--border);
-          --text-primary: var(--text);
-          --text-secondary: var(--text-muted);
-          --accent: var(--accent);
-          --accent-hover: var(--accent-hover);
-          --accent-light: var(--accent-light);
+        .login-theme-root {
+          --bg-body: #faf9f6;
+          --bg-card: #ffffff;
+          --border-color: #e5e7eb;
+          --text-primary: #111827;
+          --text-secondary: #4b5563;
+          --accent: #0d766e;
+          --accent-hover: #0f766e;
+          --accent-light: rgba(13, 118, 110, 0.1);
         }
 
         .login-premium-root {
-          background-color: var(--bg-body);
-          color: var(--text-primary);
-          transition: background-color 0.3s, color 0.3s;
+          background-color: #faf9f6;
+          color: #111827;
         }
 
         .login-card-premium {
-          background: var(--bg-surface);
-          backdrop-filter: blur(16px) saturate(180%);
-          -webkit-backdrop-filter: blur(16px) saturate(180%);
-          border: 1px solid var(--border-color);
-          border-radius: var(--border-radius-outer);
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 20px;
           padding: 2.5rem;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.07);
           width: 100%;
           max-width: 420px;
           transition: transform 0.3s ease;
@@ -115,38 +95,41 @@ export default function LoginPage() {
         .input-premium {
           width: 100%;
           padding: 0.8rem 1.2rem;
-          border-radius: var(--border-radius-inner);
-          border: 1px solid var(--border-color);
-          background: var(--bg-body);
-          color: var(--text-primary);
+          border-radius: 12px;
+          border: 1px solid #d1d5db;
+          background: #f9fafb;
+          color: #111827;
           outline: none;
           transition: all 0.2s ease;
           font-size: 0.9rem;
+          font-weight: 500;
         }
 
         .input-premium:focus {
-          border-color: var(--accent);
-          box-shadow: 0 0 0 3px var(--accent-light);
+          border-color: #0d766e;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(13, 118, 110, 0.15);
         }
 
         .btn-submit-premium {
           width: 100%;
           padding: 0.9rem;
           border-radius: 9999px;
-          background: var(--accent);
-          color: #ffffff;
-          font-weight: 600;
+          background: #0d766e;
+          color: #ffffff !important;
+          font-weight: 700;
           font-size: 0.95rem;
-          border: 1px solid var(--accent);
+          border: 1px solid #0d766e;
           cursor: pointer;
           transition: all 0.2s ease;
-          box-shadow: 0 4px 12px rgba(43, 110, 110, 0.15);
+          box-shadow: 0 4px 14px rgba(13, 118, 110, 0.25);
         }
 
         .btn-submit-premium:hover {
-          background: var(--accent-hover);
-          border-color: var(--accent-hover);
+          background: #0f766e;
+          border-color: #0f766e;
           transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(13, 118, 110, 0.35);
         }
 
         .btn-submit-premium:active {
@@ -154,36 +137,31 @@ export default function LoginPage() {
         }
 
         .brand-hand {
-          font-family: 'Edu SA Hand', cursive;
-          color: var(--accent);
-          font-weight: 700;
-          font-size: 1.4rem;
+          font-family: var(--font-outfit), var(--font-sans), system-ui, -apple-system, sans-serif;
+          color: #111827;
+          font-weight: 800;
+          font-size: 1.15rem;
+          letter-spacing: -0.025em;
         }
       ` }} />
 
       {/* Top Header Row */}
       <header className="flex justify-between items-center w-full max-w-5xl mx-auto mb-8">
         <div className="flex items-center gap-2">
-          <span className="brand-hand">PortfolioHub</span>
-          <span className="text-xs uppercase tracking-widest text-[var(--text-secondary)] font-semibold mt-1">· Portal</span>
+          <span className="font-outfit font-extrabold text-[1.15rem] tracking-tight text-[var(--text-primary)]">
+            Portfolio<span className="text-[var(--accent)] font-extrabold">Hub</span>
+          </span>
+          <span className="text-xs uppercase tracking-widest text-[var(--text-secondary)] font-semibold mt-0.5">· Portal</span>
         </div>
-        
-        <button
-          onClick={toggleTheme}
-          className="w-10 h-10 rounded-full flex items-center justify-center border border-[var(--border-color)] bg-[var(--bg-card)] hover:scale-105 active:scale-95 transition-all shadow-sm"
-          aria-label="Toggle light/dark theme"
-        >
-          <i className={theme === 'dark' ? 'fas fa-sun text-amber-500' : 'fas fa-moon text-[var(--text-secondary)]'}></i>
-        </button>
       </header>
 
       {/* Centered Login Card */}
       <main className="flex-1 flex justify-center items-center w-full">
         <div className={`login-card-premium ${isShaking ? 'shake-animation' : ''}`}>
           
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-extrabold tracking-tight mb-2">Welcome</h1>
-            <p className="text-sm text-[var(--text-secondary)]">Sign in to <b>MANAGE</b> and <b>CUSTOMIZE</b> your professional Portfolio.</p>
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-extrabold tracking-tight mb-2 text-stone-900">Welcome</h1>
+            <p className="text-sm text-stone-600">Sign in to <b className="text-stone-800">MANAGE</b> and <b className="text-stone-800">CUSTOMIZE</b> your professional Portfolio.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
@@ -194,7 +172,7 @@ export default function LoginPage() {
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]" htmlFor="username-input">Email</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-700" htmlFor="username-input">Email</label>
               <input
                 id="username-input"
                 type="text"
@@ -208,7 +186,7 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]" htmlFor="password-input">Password</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-stone-700" htmlFor="password-input">Password</label>
               <div className="relative flex items-center">
                 <input
                   id="password-input"

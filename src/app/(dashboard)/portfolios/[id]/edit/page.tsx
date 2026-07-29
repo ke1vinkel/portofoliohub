@@ -28,12 +28,63 @@ export default function PortfolioEditPage() {
   const [portPublic, setPortPublic] = useState(false);
   const [portError, setPortError] = useState('');
 
+  // Theme & Styling state
+  const [themePreset, setThemePreset] = useState<'obsidian' | 'editorial' | 'neon' | 'monochrome' | 'pastel' | 'custom'>('obsidian');
+  const [bgColor, setBgColor] = useState('#0d0d11');
+  const [surfaceColor, setSurfaceColor] = useState('#16161e');
+  const [textColor, setTextColor] = useState('#f3f4f6');
+  const [accentColor, setAccentColor] = useState('#10b981');
+  const [fontStyle, setFontStyle] = useState<'sans' | 'serif' | 'mono' | 'display'>('sans');
+  const [cardStyle, setCardStyle] = useState<'spotlight' | 'minimal' | 'glass' | 'bento'>('spotlight');
+
+  const applyPreset = (presetKey: string) => {
+    setThemePreset(presetKey as any);
+    if (presetKey === 'obsidian') {
+      setBgColor('#0d0d11');
+      setSurfaceColor('#16161e');
+      setTextColor('#f3f4f6');
+      setAccentColor('#10b981');
+      setFontStyle('sans');
+      setCardStyle('spotlight');
+    } else if (presetKey === 'editorial') {
+      setBgColor('#faf8f5');
+      setSurfaceColor('#ffffff');
+      setTextColor('#1c1917');
+      setAccentColor('#d97706');
+      setFontStyle('serif');
+      setCardStyle('minimal');
+    } else if (presetKey === 'neon') {
+      setBgColor('#05070f');
+      setSurfaceColor('#0f172a');
+      setTextColor('#f8fafc');
+      setAccentColor('#06b6d4');
+      setFontStyle('display');
+      setCardStyle('glass');
+    } else if (presetKey === 'monochrome') {
+      setBgColor('#18181b');
+      setSurfaceColor('#27272a');
+      setTextColor('#ffffff');
+      setAccentColor('#e4e4e7');
+      setFontStyle('mono');
+      setCardStyle('bento');
+    } else if (presetKey === 'pastel') {
+      setBgColor('#fdf4ff');
+      setSurfaceColor('#ffffff');
+      setTextColor('#3b0764');
+      setAccentColor('#a855f7');
+      setFontStyle('sans');
+      setCardStyle('glass');
+    }
+  };
+
   // Project Editor state (handles both Add and Edit)
   const [isEditingProject, setIsEditingProject] = useState(false);
   const [projectEditId, setProjectEditId] = useState<string | null>(null); // null = Add, string = Edit
   const [projTitle, setProjTitle] = useState('');
   const [projDesc, setProjDesc] = useState('');
+  const [projDetailedDesc, setProjDetailedDesc] = useState('');
   const [projImage, setProjImage] = useState('');
+  const [projImages, setProjImages] = useState<string[]>([]);
   const [projTech, setProjTech] = useState('');
   const [projCategory, setProjCategory] = useState('Web & App Development');
   const [customCategory, setCustomCategory] = useState('');
@@ -46,10 +97,29 @@ export default function PortfolioEditPage() {
   const portfolio = db.portfolios.find(p => p.id === portfolioId);
 
   // Unsaved Changes Tracking
+  const currentThemeConfig = {
+    preset: themePreset,
+    bg_color: bgColor,
+    surface_color: surfaceColor,
+    text_color: textColor,
+    accent_color: accentColor,
+    font_style: fontStyle,
+    card_style: cardStyle,
+  };
+
   const isPortDirty = portfolio ? (
     portTitle !== (portfolio.title || '') ||
     portDesc !== (portfolio.description || '') ||
-    portPublic !== (portfolio.is_public === 1)
+    portPublic !== (portfolio.is_public === 1) ||
+    JSON.stringify(currentThemeConfig) !== JSON.stringify(portfolio.theme_config || {
+      preset: 'obsidian',
+      bg_color: '#0d0d11',
+      surface_color: '#16161e',
+      text_color: '#f3f4f6',
+      accent_color: '#10b981',
+      font_style: 'sans',
+      card_style: 'spotlight',
+    })
   ) : false;
 
   const originalProject = projectEditId ? db.projects.find(p => p.id === projectEditId) : null;
@@ -58,7 +128,9 @@ export default function PortfolioEditPage() {
       ? (
           projTitle !== originalProject.title ||
           projDesc !== (originalProject.description || '') ||
+          projDetailedDesc !== (originalProject.detailed_description || '') ||
           projImage !== (originalProject.image || '') ||
+          JSON.stringify(projImages) !== JSON.stringify(originalProject.images || []) ||
           projTech !== originalProject.technologies.join(', ') ||
           projCategory !== (originalProject.category || 'Web & App Development') ||
           projEmbed !== (originalProject.embed_url || '') ||
@@ -71,7 +143,9 @@ export default function PortfolioEditPage() {
       : (
           projTitle !== '' ||
           projDesc !== '' ||
+          projDetailedDesc !== '' ||
           projImage !== '' ||
+          projImages.length > 0 ||
           projTech !== '' ||
           projCategory !== 'Web & App Development' ||
           projEmbed !== '' ||
@@ -106,6 +180,17 @@ export default function PortfolioEditPage() {
       setPortTitle(portfolio.title);
       setPortDesc(portfolio.description || '');
       setPortPublic(portfolio.is_public === 1);
+
+      if (portfolio.theme_config) {
+        const tc = portfolio.theme_config;
+        setThemePreset((tc.preset as any) || 'custom');
+        setBgColor(tc.bg_color || '#0d0d11');
+        setSurfaceColor(tc.surface_color || '#16161e');
+        setTextColor(tc.text_color || '#f3f4f6');
+        setAccentColor(tc.accent_color || '#10b981');
+        setFontStyle(tc.font_style || 'sans');
+        setCardStyle(tc.card_style || 'spotlight');
+      }
     }
   }, [portfolio]);
 
@@ -140,14 +225,26 @@ export default function PortfolioEditPage() {
       return;
     }
 
-    updatePortfolio(portfolioId, portTitle.trim(), portDesc.trim(), portPublic);
-    showToast('Portfolio details saved! ✅');
+    const themeConfig = {
+      preset: themePreset,
+      bg_color: bgColor,
+      surface_color: surfaceColor,
+      text_color: textColor,
+      accent_color: accentColor,
+      font_style: fontStyle,
+      card_style: cardStyle,
+    };
+
+    updatePortfolio(portfolioId, portTitle.trim(), portDesc.trim(), portPublic, themeConfig);
+    showToast('Portfolio & Theme settings saved! 🎨');
   };
   const handleOpenAddProject = () => {
     setProjectEditId(null);
     setProjTitle('');
     setProjDesc('');
+    setProjDetailedDesc('');
     setProjImage('');
+    setProjImages([]);
     setProjTech('');
     setProjCategory('Web & App Development');
     setCustomCategory('');
@@ -162,7 +259,9 @@ export default function PortfolioEditPage() {
     setProjectEditId(pr.id);
     setProjTitle(pr.title);
     setProjDesc(pr.description || '');
+    setProjDetailedDesc(pr.detailed_description || '');
     setProjImage(pr.image || '');
+    setProjImages(Array.isArray(pr.images) ? pr.images : []);
     setProjTech(pr.technologies.join(', '));
     setProjCategory(pr.category || 'Web & App Development');
     if (pr.category && !categoryOptions.includes(pr.category)) {
@@ -195,12 +294,12 @@ export default function PortfolioEditPage() {
     }
 
     if (!projDesc.trim()) {
-      setProjError('Project description is required.');
+      setProjError('Preview description is required.');
       return;
     }
 
     if (projImage.trim() && !isValidImageUrl(projImage.trim())) {
-      setProjError('Please enter a valid image URL (http://, https://, or data:image/).');
+      setProjError('Please enter a valid cover image URL (http://, https://, or data:image/).');
       return;
     }
 
@@ -214,7 +313,9 @@ export default function PortfolioEditPage() {
     const projectData = {
       title: projTitle.trim(),
       description: projDesc.trim(),
+      detailed_description: projDetailedDesc.trim() || null,
       image: projImage.trim() || null,
+      images: projImages.map(i => i.trim()).filter(i => i.length > 0),
       technologies: techArray,
       category: finalCategory,
       embed_url: projEmbed.trim(),
@@ -341,7 +442,7 @@ export default function PortfolioEditPage() {
             />
           </div>
 
-          <div className="input-group">
+          <div className="input-group flex flex-col">
             <label className="checkbox" htmlFor="port-public-checkbox">
               <input
                 id="port-public-checkbox"
@@ -349,17 +450,195 @@ export default function PortfolioEditPage() {
                 checked={portPublic}
                 onChange={(e) => setPortPublic(e.target.checked)}
               />
-              <span>Publish this portfolio</span>
+              <span className="font-semibold text-xs text-stone-900 dark:text-zinc-100">Publish this portfolio as active public showcase</span>
             </label>
+          </div>
+
+          {/* Appearance & Theme Styling Controls */}
+          <div className="border-t border-stone-100 dark:border-zinc-700/60 pt-4 flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h4 className="font-bold text-xs text-stone-900 dark:text-zinc-100">✦ Appearance & Theme Styling</h4>
+                <span className="text-[10px] text-stone-400 dark:text-zinc-500 block">Personalize your portfolio's colors, typography, and card layout styles.</span>
+              </div>
+            </div>
+
+            {/* 1-Click Preset Shortcuts */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">1-Click Aesthetic Presets</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'obsidian', label: 'Obsidian Dark', bg: '#0d0d11', accent: '#10b981' },
+                  { key: 'editorial', label: 'Warm Editorial', bg: '#faf8f5', accent: '#d97706' },
+                  { key: 'neon', label: 'Cyber Neon', bg: '#05070f', accent: '#06b6d4' },
+                  { key: 'monochrome', label: 'Monochrome', bg: '#18181b', accent: '#e4e4e7' },
+                  { key: 'pastel', label: 'Studio Pastel', bg: '#fdf4ff', accent: '#a855f7' },
+                ].map(p => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => applyPreset(p.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer ${
+                      themePreset === p.key 
+                        ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--text-primary)] shadow-sm scale-105' 
+                        : 'border-stone-200 dark:border-zinc-700 bg-stone-50 dark:bg-zinc-800/60 text-stone-600 dark:text-zinc-300 hover:border-stone-300'
+                    }`}
+                  >
+                    <span className="w-3 h-3 rounded-full border border-black/20" style={{ backgroundColor: p.accent }} />
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Color Pickers */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-stone-50/60 dark:bg-zinc-900/40 p-3 rounded-xl border border-stone-200/60 dark:border-zinc-800">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Background</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={bgColor}
+                    onChange={(e) => { setBgColor(e.target.value); setThemePreset('custom'); }}
+                    className="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={bgColor}
+                    onChange={(e) => { setBgColor(e.target.value); setThemePreset('custom'); }}
+                    className="input-field py-1 text-xs font-mono w-20"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Card Surface</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={surfaceColor}
+                    onChange={(e) => { setSurfaceColor(e.target.value); setThemePreset('custom'); }}
+                    className="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={surfaceColor}
+                    onChange={(e) => { setSurfaceColor(e.target.value); setThemePreset('custom'); }}
+                    className="input-field py-1 text-xs font-mono w-20"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Text Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => { setTextColor(e.target.value); setThemePreset('custom'); }}
+                    className="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={textColor}
+                    onChange={(e) => { setTextColor(e.target.value); setThemePreset('custom'); }}
+                    className="input-field py-1 text-xs font-mono w-20"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Brand Accent</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => { setAccentColor(e.target.value); setThemePreset('custom'); }}
+                    className="w-8 h-8 rounded border-0 cursor-pointer p-0 bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={accentColor}
+                    onChange={(e) => { setAccentColor(e.target.value); setThemePreset('custom'); }}
+                    className="input-field py-1 text-xs font-mono w-20"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Typography & Card Style Dropdowns */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Typography Style</label>
+                <select
+                  value={fontStyle}
+                  onChange={(e) => { setFontStyle(e.target.value as any); setThemePreset('custom'); }}
+                  className="input-field py-2 text-xs"
+                >
+                  <option value="sans">Modern Sans-Serif (Outfit / Inter)</option>
+                  <option value="serif">Elegant Serif (Editorial Classic)</option>
+                  <option value="mono">Minimal Technical Mono</option>
+                  <option value="display">Bold Geometric Display</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Card Layout & Border Style</label>
+                <select
+                  value={cardStyle}
+                  onChange={(e) => { setCardStyle(e.target.value as any); setThemePreset('custom'); }}
+                  className="input-field py-2 text-xs"
+                >
+                  <option value="spotlight">Spotlight Refraction Glow</option>
+                  <option value="minimal">Minimal Hairline Border</option>
+                  <option value="glass">Translucent Glassmorphism</option>
+                  <option value="bento">Bold Editorial Bento</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Real-time Live Theme Preview Box */}
+            <div className="flex flex-col gap-1.5 mt-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">Real-Time Live Preview</label>
+              <div
+                className="p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3"
+                style={{
+                  backgroundColor: bgColor,
+                  color: textColor,
+                  borderColor: accentColor + '40',
+                  fontFamily: fontStyle === 'serif' ? 'Georgia, serif' : fontStyle === 'mono' ? 'Courier New, monospace' : fontStyle === 'display' ? 'Impact, sans-serif' : 'var(--font-outfit), sans-serif',
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: accentColor }}>✦ Preview Project</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-mono font-bold" style={{ backgroundColor: accentColor + '20', color: accentColor }}>Featured</span>
+                </div>
+                <div
+                  className="p-3.5 rounded-xl border flex flex-col gap-2 shadow-sm transition-all"
+                  style={{
+                    backgroundColor: surfaceColor,
+                    borderColor: cardStyle === 'spotlight' ? accentColor : cardStyle === 'bento' ? textColor + '30' : cardStyle === 'glass' ? 'rgba(255,255,255,0.1)' : textColor + '20',
+                    backdropFilter: cardStyle === 'glass' ? 'blur(10px)' : 'none',
+                  }}
+                >
+                  <h4 className="text-sm font-bold m-0" style={{ color: textColor }}>Portfolio Custom Theme Showcase</h4>
+                  <p className="text-xs opacity-80 leading-relaxed m-0">This is how your projects and cards will appear on your public portfolio page.</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded border" style={{ color: accentColor, borderColor: accentColor + '40', backgroundColor: accentColor + '10' }}>
+                      Accent Badge
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-full font-semibold text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-sm text-xs transition-all active:scale-95"
+            className="w-full py-3 rounded-full font-semibold text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-sm text-xs transition-all active:scale-95 mt-2"
           >
-            Save Settings
-          </button>
-        </form>
+            Save Portfolio & Theme Settings
+          </button>         </form>
       </div>
 
       {/* 2. Portfolio Projects Registry List */}
@@ -402,49 +681,124 @@ export default function PortfolioEditPage() {
 
               <div className="input-group flex flex-col">
                 <label className="input-label flex justify-between items-center" htmlFor="proj-desc-input">
-                  <span>Project Description & Detailed Explanation</span>
-                  <span className="text-[10px] text-stone-400 dark:text-zinc-500 font-mono">Displayed in &apos;View Details&apos; Modal</span>
+                  <span>Card Preview Text (Short Summary)</span>
+                  <span className="text-[10px] text-stone-400 dark:text-zinc-500 font-mono">Displayed on Project Card</span>
                 </label>
                 <textarea
                   id="proj-desc-input"
                   value={projDesc}
                   onChange={(e) => setProjDesc(e.target.value)}
-                  className="input-field leading-relaxed font-outfit"
-                  rows={5}
-                  placeholder="Write a comprehensive description of this project, including what you built, architecture decisions, key features, and impact..."
+                  className="input-field leading-relaxed font-outfit text-xs"
+                  rows={2}
+                  placeholder="Short, crisp summary (1-2 sentences) shown on the public project card..."
                 />
                 <div className="input-hint">
-                  This detailed text will be shown when recruiters and visitors click &quot;View Details&quot; on your public portfolio.
+                  Keeps your public portfolio cards clean and scannable.
                 </div>
               </div>
 
               <div className="input-group flex flex-col">
-                <label className="input-label" htmlFor="proj-image-input">Image URL</label>
+                <label className="input-label flex justify-between items-center" htmlFor="proj-detailed-desc-input">
+                  <span>Detailed Overview & Background</span>
+                  <span className="text-[10px] text-stone-400 dark:text-zinc-500 font-mono">Displayed in &apos;View Details&apos; Modal</span>
+                </label>
+                <textarea
+                  id="proj-detailed-desc-input"
+                  value={projDetailedDesc}
+                  onChange={(e) => setProjDetailedDesc(e.target.value)}
+                  className="input-field leading-relaxed font-outfit text-xs"
+                  rows={5}
+                  placeholder="Comprehensive explanation, methodology, client goal, design process, deliverables, or technical architecture..."
+                />
+                <div className="input-hint">
+                  Full text shown when visitors click &quot;View Details&quot; on your project.
+                </div>
+              </div>
+
+              <div className="input-group flex flex-col">
+                <label className="input-label" htmlFor="proj-image-input">Main Cover Image URL</label>
                 <input
                   id="proj-image-input"
                   type="text"
                   value={projImage}
                   onChange={(e) => setProjImage(e.target.value)}
                   className="input-field"
+                  placeholder="https://images.unsplash.com/..."
                 />
-                <div className="input-hint">Direct link to JPG/PNG image files. Supports Unsplash or Picsum.</div>
+                <div className="input-hint">Direct link to cover photo/thumbnail (rendered as a 1:1 square on public cards).</div>
                 {projImage && isValidImageUrl(projImage) && (
-                  <div className="mt-2.5 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-700">
+                  <div className="mt-2.5 w-24 h-24 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-950">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={projImage} alt="Preview" className="w-full h-24 object-cover" />
+                    <img src={projImage} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
+              {/* Visualization Pictures / Gallery */}
+              <div className="space-y-3 p-4 bg-stone-50/60 dark:bg-zinc-800/40 rounded-xl border border-stone-200/60 dark:border-zinc-700/60">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <label className="input-label font-bold text-xs block">Visualization Pictures / Gallery</label>
+                    <span className="text-[10px] text-stone-400 dark:text-zinc-500 block mt-0.5">
+                      Showcase multi-angle photos, wireframes, artwork, or blueprints (for IT, Design, Photography, Architecture, etc.)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProjImages([...projImages, ''])}
+                    className="px-2.5 py-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded text-[10px] font-bold transition-all active:scale-95 shrink-0"
+                  >
+                    + Add Picture URL
+                  </button>
+                </div>
+
+                {projImages.length === 0 ? (
+                  <p className="text-[10px] text-stone-400 dark:text-zinc-500 italic">No additional visualization pictures added. Click &quot;+ Add Picture URL&quot; to add gallery images.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {projImages.map((imgUrl, index) => (
+                      <div key={index} className="flex flex-col sm:flex-row gap-2.5 items-center bg-white dark:bg-zinc-900 p-2.5 rounded-lg border border-stone-200/80 dark:border-zinc-800">
+                        {imgUrl && isValidImageUrl(imgUrl) && (
+                          <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 border border-stone-200 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-950">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={imgUrl} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={imgUrl}
+                          onChange={(e) => {
+                            const newImgs = [...projImages];
+                            newImgs[index] = e.target.value;
+                            setProjImages(newImgs);
+                          }}
+                          className="input-field py-1.5 text-xs flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setProjImages(projImages.filter((_, i) => i !== index))}
+                          className="px-2 py-1 bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded text-xs font-bold transition-all hover:bg-red-100 active:scale-95 shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
               <div className="input-group flex flex-col">
-                <label className="input-label" htmlFor="proj-tech-input">Technologies (comma separated)</label>
+                <label className="input-label" htmlFor="proj-tech-input">Tools, Skills & Technologies (comma separated)</label>
                 <input
                   id="proj-tech-input"
                   type="text"
                   value={projTech}
                   onChange={(e) => setProjTech(e.target.value)}
                   className="input-field"
+                  placeholder="e.g. Figma, AutoCAD, Lightroom, React, Financial Analysis, Copywriting..."
                 />
+                <div className="input-hint">List relevant software, tools, methodology, or skills used for this project.</div>
               </div>
 
               <div className="input-group flex flex-col">

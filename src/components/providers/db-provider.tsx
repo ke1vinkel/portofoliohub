@@ -38,6 +38,16 @@ export interface Profile {
   [key: string]: any;
 }
 
+export interface ThemeConfig {
+  preset?: string;
+  bg_color?: string;
+  surface_color?: string;
+  text_color?: string;
+  accent_color?: string;
+  font_style?: 'sans' | 'serif' | 'mono' | 'display';
+  card_style?: 'spotlight' | 'minimal' | 'glass' | 'bento';
+}
+
 export interface Portfolio {
   id: string;
   user_id: string;
@@ -45,6 +55,7 @@ export interface Portfolio {
   slug: string;
   description: string;
   is_public: number;
+  theme_config?: ThemeConfig | null;
   created_at: string;
   updated_at: string;
 }
@@ -60,7 +71,9 @@ export interface Project {
   portfolio_id: string;
   title: string;
   description: string;
+  detailed_description?: string | null;
   image: string | null;
+  images?: string[];
   github_url: string | null;
   live_url: string | null;
   technologies: string[];
@@ -125,7 +138,7 @@ interface DatabaseContextType {
   refreshDb: () => Promise<void>;
   setActivePortfolio: (id: string) => void;
   addPortfolio: (title: string, description: string, isPublic: boolean) => Promise<string>;
-  updatePortfolio: (id: string, title: string, description: string, isPublic: boolean) => Promise<void>;
+  updatePortfolio: (id: string, title: string, description: string, isPublic: boolean, themeConfig?: ThemeConfig | null) => Promise<void>;
   deletePortfolio: (id: string) => Promise<void>;
   togglePortfolioPublicStatus: (id: string) => Promise<void>;
   addProject: (portfolioId: string, project: Omit<Project, 'id' | 'portfolio_id' | 'created_at'>) => Promise<boolean>;
@@ -243,12 +256,12 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const updatePortfolio = async (id: string, title: string, description: string, isPublic: boolean) => {
+  const updatePortfolio = async (id: string, title: string, description: string, isPublic: boolean, themeConfig?: ThemeConfig | null) => {
     if (!currentUser) return;
     try {
       const res = await apiFetch(`/api/portfolios/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ title, description, is_public: isPublic ? 1 : 0 }),
+        body: JSON.stringify({ title, description, is_public: isPublic ? 1 : 0, theme_config: themeConfig }),
       });
       if (res.ok) {
         await refreshDb();
@@ -304,6 +317,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           portfolio_id: portfolioId,
           ...project,
           image: project.image ? getRawGitHubUrl(project.image) : null,
+          images: Array.isArray(project.images) ? project.images.map(img => getRawGitHubUrl(img)) : [],
           embed_url: normalizeEmbedUrl(project.embed_url),
         }),
       });
@@ -328,6 +342,7 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           id,
           ...project,
           image: project.image !== undefined ? (project.image ? getRawGitHubUrl(project.image) : null) : undefined,
+          images: project.images !== undefined ? (Array.isArray(project.images) ? project.images.map(img => getRawGitHubUrl(img)) : []) : undefined,
           embed_url: project.embed_url !== undefined ? normalizeEmbedUrl(project.embed_url) : undefined,
         }),
       });

@@ -1,6 +1,6 @@
 // Custom HTTP Client for Turso Database (bypasses @libsql/client migration job 400 check)
-const rawPortoUrl = (process.env.TURSO_DATABASE_URL || '').replace('libsql://', '').replace('https://', '');
-const rawPortoToken = process.env.TURSO_AUTH_TOKEN || '';
+const rawPortoUrl = (process.env.APP_DATABASE_URL || process.env.TURSO_DATABASE_URL || '').replace('libsql://', '').replace('https://', '');
+const rawPortoToken = process.env.APP_DATABASE_TOKEN || process.env.TURSO_AUTH_TOKEN || '';
 
 const rawAuthUrl = (process.env.AUTH_DATABASE_URL || '').replace('libsql://', '').replace('https://', '');
 const rawAuthToken = process.env.AUTH_DATABASE_TOKEN || '';
@@ -102,6 +102,22 @@ let isInitialized = false;
 export async function initDatabase(): Promise<void> {
   if (isInitialized) return;
   isInitialized = true;
+
+  try {
+    await turso.execute('ALTER TABLE projects ADD COLUMN detailed_description TEXT');
+  } catch (e) {
+    // Ignore if column already exists
+  }
+  try {
+    await turso.execute('ALTER TABLE projects ADD COLUMN images TEXT');
+  } catch (e) {
+    // Ignore if column already exists
+  }
+  try {
+    await turso.execute('ALTER TABLE portfolios ADD COLUMN theme_config TEXT');
+  } catch (e) {
+    // Ignore if column already exists
+  }
 }
 
 export async function ensureUserProfileAndPortfolio(userId: string, name: string) {

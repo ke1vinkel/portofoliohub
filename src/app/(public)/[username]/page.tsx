@@ -35,15 +35,16 @@ function AnimatedCounter({ target }: { target: number }) {
   return <span>{count}</span>;
 }
 
-// Spotlight cursor border tracking card
 function SpotlightCard({ 
   children, 
   className = '', 
-  isFeatured = false 
+  isFeatured = false,
+  cardStyle = 'spotlight'
 }: { 
   children: React.ReactNode; 
   className?: string; 
   isFeatured?: boolean;
+  cardStyle?: string;
 }) {
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -57,23 +58,33 @@ function SpotlightCard({
     });
   };
 
+  const styleClasses = cardStyle === 'glass' 
+    ? 'backdrop-blur-md bg-white/70 border border-black/10 shadow-md' 
+    : cardStyle === 'bento' 
+    ? 'rounded-3xl border-2 border-[var(--border-color)] shadow-md bg-white/90' 
+    : cardStyle === 'minimal' 
+    ? 'shadow-none border border-[var(--border-color)] rounded-lg bg-white/90' 
+    : '';
+
   return (
     <div
       ref={cardRef}
       onMouseMove={handleMouseMove}
-      className={`project-card-premium animate-fadeIn group/card relative overflow-hidden transition-all duration-500 hover:scale-[1.01] ${className}`}
+      className={`project-card-premium animate-fadeIn group/card relative overflow-hidden transition-all duration-500 hover:scale-[1.01] ${styleClasses} ${className}`}
     >
       {/* Spotlight border refraction mask */}
-      <div
-        className="pointer-events-none absolute -inset-px opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 z-0"
-        style={{
-          background: `radial-gradient(280px circle at ${coords.x}px ${coords.y}px, var(--accent), transparent 65%)`,
-          padding: '1px',
-          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          maskComposite: 'exclude',
-        }}
-      />
+      {cardStyle !== 'minimal' && (
+        <div
+          className="pointer-events-none absolute -inset-px opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 z-0"
+          style={{
+            background: `radial-gradient(280px circle at ${coords.x}px ${coords.y}px, var(--accent), transparent 65%)`,
+            padding: '1px',
+            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+          }}
+        />
+      )}
       <div className={`relative z-10 flex w-full h-full ${
         isFeatured ? 'flex-col md:flex-row gap-6' : 'flex-col gap-4'
       }`}>
@@ -88,7 +99,7 @@ export default function RecruiterViewPage() {
   const router = useRouter();
   const username = params.username as string;
 
-  const { db, dbLoaded, currentUser, toggleTheme, theme, addRecruiterMessage } = usePortfolio();
+  const { db, dbLoaded, currentUser, addRecruiterMessage } = usePortfolio();
 
   // Find user by username, email prefix, nim, or id
   const student = db.users.find(u => 
@@ -113,6 +124,15 @@ export default function RecruiterViewPage() {
 
   // Selected project state for modal
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [activeModalImage, setActiveModalImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedProject) {
+      setActiveModalImage(selectedProject.image || (selectedProject.images?.[0] ?? null));
+    } else {
+      setActiveModalImage(null);
+    }
+  }, [selectedProject]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -133,6 +153,71 @@ export default function RecruiterViewPage() {
       }
     }
   }, [student]);
+
+  // Derive student portfolios and active public portfolio before early returns
+  const studentPortfolios = useMemo(() => {
+    if (!student) return [];
+    return db.portfolios.filter(p => p.user_id === student.id);
+  }, [student, db.portfolios]);
+
+  const activePublicPortfolio = useMemo(() => {
+    if (studentPortfolios.length === 0) return null;
+    return (
+      studentPortfolios.find(p => p.id === activePortfolioId) || 
+      studentPortfolios.find(p => p.is_public === 1) || 
+      studentPortfolios[0] || 
+      null
+    );
+  }, [studentPortfolios, activePortfolioId]);
+
+  const themeConfig = activePublicPortfolio?.theme_config;
+
+  const fontStyleFamily = useMemo(() => {
+    if (!themeConfig?.font_style) return 'var(--font-outfit), sans-serif';
+    switch (themeConfig.font_style) {
+      case 'serif': return 'Georgia, Cambria, "Times New Roman", Times, serif';
+      case 'mono': return 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+      case 'display': return '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif';
+      default: return 'var(--font-outfit), sans-serif';
+    }
+  }, [themeConfig]);
+
+  const customThemeVars = useMemo(() => {
+    const defaultBg = '#faf9f6';
+    const defaultSurface = '#ffffff';
+    const defaultText = '#18181b';
+    const defaultAccent = '#10b981';
+
+    if (!themeConfig) {
+      return {
+        '--bg-body': defaultBg,
+        '--bg-surface': defaultSurface,
+        '--bg-card': defaultSurface,
+        '--text-primary': defaultText,
+        '--text-secondary': '#52525b',
+        '--text-muted': '#71717a',
+        '--accent': defaultAccent,
+        '--accent-hover': defaultAccent,
+        '--accent-light': defaultAccent + '15',
+        '--border-color': '#e4e4e7',
+        '--border-color-glow': defaultAccent,
+      } as React.CSSProperties;
+    }
+
+    return {
+      '--bg-body': themeConfig.bg_color || defaultBg,
+      '--bg-surface': themeConfig.surface_color || defaultSurface,
+      '--bg-card': themeConfig.surface_color || defaultSurface,
+      '--text-primary': themeConfig.text_color || defaultText,
+      '--text-secondary': themeConfig.text_color ? themeConfig.text_color + 'dd' : '#52525b',
+      '--text-muted': themeConfig.text_color ? themeConfig.text_color + 'a0' : '#71717a',
+      '--accent': themeConfig.accent_color || defaultAccent,
+      '--accent-hover': themeConfig.accent_color || defaultAccent,
+      '--border-color-glow': themeConfig.accent_color || defaultAccent,
+      '--accent-light': (themeConfig.accent_color || defaultAccent) + '20',
+      '--border-color': (themeConfig.accent_color || defaultAccent) + '35',
+    } as React.CSSProperties;
+  }, [themeConfig]);
 
   // Load student profile & define typing words before early returns
   const profile = student ? db.profiles[student.id] : null;
@@ -192,6 +277,24 @@ export default function RecruiterViewPage() {
     return () => window.removeEventListener('resize', adjustDynamicViewport);
   }, []);
 
+  // Force persistent light mode on public showcase page regardless of dashboard theme
+  useEffect(() => {
+    const prevDataTheme = document.documentElement.getAttribute('data-theme');
+    const hasDarkClass = document.documentElement.classList.contains('dark');
+
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.remove('dark');
+
+    return () => {
+      if (prevDataTheme) {
+        document.documentElement.setAttribute('data-theme', prevDataTheme);
+      }
+      if (hasDarkClass) {
+        document.documentElement.classList.add('dark');
+      }
+    };
+  }, []);
+
   // Memoized style tag to avoid stylesheet re-injection on typing animation updates
   const styleElement = useMemo(() => (
     <style dangerouslySetInnerHTML={{ __html: `
@@ -227,7 +330,7 @@ export default function RecruiterViewPage() {
       .nav-premium {
         position: sticky;
         top: 0;
-        z-index: 100;
+        z-index: 30;
         background: var(--bg-body);
         border-bottom: 1px solid var(--border-color);
         height: 64px;
@@ -836,28 +939,13 @@ export default function RecruiterViewPage() {
 
   if (!student) {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center bg-stone-50 dark:bg-zinc-900 p-6 min-h-screen text-center text-stone-900 dark:text-zinc-100">
+      <div className="flex-grow flex flex-col justify-center items-center bg-stone-50 p-6 min-h-screen text-center text-stone-900">
         <span className="text-4xl">🕵️‍♂️</span>
         <h3 className="text-xl font-bold font-display mt-3">Profile Not Found</h3>
         <p className="text-xs text-stone-400 mt-1">This user account does not exist or has been disabled.</p>
-        <button
-          onClick={() => router.push('/login')}
-          className="mt-6 px-5 py-2.5 bg-stone-950 text-white dark:bg-amber-600 rounded-full text-xs font-semibold shadow-sm"
-        >
-          Sign In
-        </button>
       </div>
     );
   }
-
-  // Load student portfolios
-  const studentPortfolios = db.portfolios.filter(p => p.user_id === student.id);
-  
-  // Determine portfolio to show: use user-selected active portfolio from state, fallback to first public, then first overall
-  const activePublicPortfolio = 
-    studentPortfolios.find(p => p.id === activePortfolioId) || 
-    studentPortfolios.find(p => p.is_public === 1) || 
-    studentPortfolios[0];
 
   // Lecturer or Owner access validation override
   const isLecturer = currentUser?.role === 'lecturer';
@@ -866,19 +954,13 @@ export default function RecruiterViewPage() {
 
   if (isPrivate && !isLecturer && !isOwner) {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center bg-stone-50 dark:bg-zinc-900 p-6 min-h-screen text-center text-stone-950 dark:text-zinc-100">
-        <svg className="w-12 h-12 text-stone-400 dark:text-zinc-600 mb-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+      <div className="flex-grow flex flex-col justify-center items-center bg-stone-50 p-6 min-h-screen text-center text-stone-950">
+        <svg className="w-12 h-12 text-stone-400 mb-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4M12 15v3" />
         </svg>
         <h3 className="text-xl font-bold font-display">Portfolio Private</h3>
         <p className="text-xs text-stone-500 mt-1">This student portfolio has not been published yet.</p>
-        <button
-          onClick={() => router.push('/login')}
-          className="mt-6 px-5 py-2.5 bg-stone-950 text-white dark:bg-amber-600 rounded-full text-xs font-semibold shadow"
-        >
-          Sign In
-        </button>
       </div>
     );
   }
@@ -971,7 +1053,10 @@ export default function RecruiterViewPage() {
   };
 
   return (
-    <div className="portfolio-premium-root font-outfit w-full relative overflow-hidden flex flex-col min-h-screen">
+    <div 
+      className="portfolio-premium-root font-outfit w-full relative overflow-hidden flex flex-col min-h-screen"
+      style={{ ...customThemeVars, fontFamily: fontStyleFamily }}
+    >
       
       {/* Stylesheet injection */}
       {styleElement}
@@ -981,7 +1066,7 @@ export default function RecruiterViewPage() {
 
       {/* Mode / Status banner alerts */}
       {isLecturer && (
-        <div className="sticky top-0 z-50 bg-stone-900 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 flex justify-between items-center shadow-md border-b border-stone-800">
+        <div className="relative z-20 bg-stone-900 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 flex justify-between items-center shadow-md border-b border-stone-800 w-full">
           <span className="flex items-center gap-1.5">
             <i className="fas fa-lock text-amber-500"></i> Lecturer Preview Mode {isPrivate && '• Private Content'}
           </span>
@@ -995,7 +1080,7 @@ export default function RecruiterViewPage() {
       )}
 
       {isOwner && isPrivate && !isLecturer && (
-        <div className="sticky top-0 z-50 bg-stone-900 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 flex justify-between items-center shadow-md border-b border-stone-800">
+        <div className="relative z-20 bg-stone-900 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 flex justify-between items-center shadow-md border-b border-stone-800 w-full">
           <span className="flex items-center gap-1.5">
             <i className="fas fa-eye-slash text-amber-500"></i> Owner Preview Mode (Private Page Preview)
           </span>
@@ -1034,20 +1119,15 @@ export default function RecruiterViewPage() {
                 <i className="fas fa-file-pdf"></i> CV
               </a>
             )}
-            <button
-              onClick={toggleTheme}
-              className="theme-toggle-premium"
-              aria-label="Toggle dark mode"
-            >
-              <i className={`fas ${theme === 'dark' ? 'fa-sun text-amber-500' : 'fa-moon'}`}></i>
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="settings-btn-premium"
-              aria-label="Settings"
-            >
-              <i className="fas fa-cog"></i>
-            </button>
+            {currentUser && (
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="settings-btn-premium"
+                aria-label="Settings"
+              >
+                <i className="fas fa-cog"></i>
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -1223,13 +1303,14 @@ export default function RecruiterViewPage() {
                     <SpotlightCard
                       key={project.id}
                       isFeatured={isFeatured}
+                      cardStyle={themeConfig?.card_style || 'spotlight'}
                       className={isFeatured ? 'sm:col-span-2' : ''}
                     >
                       {project.image && (
                         <div 
                           onClick={() => setSelectedProject(project)}
-                          className={`overflow-hidden rounded-xl bg-[var(--bg-body)] border border-[var(--border-color)] shrink-0 cursor-pointer ${
-                            isFeatured ? 'w-full sm:w-2/5 h-44 sm:h-auto min-h-[160px]' : 'w-full h-40'
+                          className={`overflow-hidden rounded-xl bg-[var(--bg-body)] border border-[var(--border-color)] shrink-0 cursor-pointer aspect-square ${
+                            isFeatured ? 'w-full sm:w-44 md:w-52 h-auto' : 'w-full max-h-56'
                           }`}
                           title="Click to view project details"
                         >
@@ -1402,17 +1483,23 @@ export default function RecruiterViewPage() {
       {/* Project Detail Modal */}
       {selectedProject && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn"
           onClick={() => setSelectedProject(null)}
         >
           <div 
-            className="bg-white dark:bg-zinc-900 border border-stone-200/80 dark:border-zinc-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative flex flex-col gap-5 animate-scaleUp text-stone-900 dark:text-zinc-100 font-outfit"
+            className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 relative flex flex-col gap-5 animate-scaleUp text-[var(--text-primary)] transition-all"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              borderColor: 'var(--border-color)',
+              fontFamily: fontStyleFamily,
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={() => setSelectedProject(null)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 dark:bg-zinc-800 text-stone-500 hover:text-stone-900 dark:text-zinc-400 dark:hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 z-10"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--bg-body)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 z-10 cursor-pointer"
               aria-label="Close Modal"
             >
               ✕
@@ -1423,19 +1510,19 @@ export default function RecruiterViewPage() {
               <div className="flex items-center gap-2">
                 <span className="tag-premium">{selectedProject.category || 'PROJECT'}</span>
                 {selectedProject.featured === 1 && (
-                  <span className="text-[9px] font-mono font-bold tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase">
+                  <span className="text-[9px] font-mono font-bold tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase border border-amber-500/20">
                     ★ Featured
                   </span>
                 )}
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold font-display text-stone-950 dark:text-white tracking-tight mt-1">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight mt-1 text-[var(--text-primary)]">
                 {selectedProject.title}
               </h2>
             </div>
 
-            {/* Embedded Media Preview or Project Image */}
+            {/* Embedded Media Preview or Project Image Gallery */}
             {selectedProject.embed_url ? (
-              <div className="w-full aspect-video rounded-xl overflow-hidden bg-black border border-stone-200 dark:border-zinc-800 shadow-inner">
+              <div className="w-full aspect-video rounded-xl overflow-hidden bg-black border border-[var(--border-color)] shadow-inner">
                 <iframe
                   src={normalizeEmbedUrl(selectedProject.embed_url)}
                   title={selectedProject.title}
@@ -1444,25 +1531,71 @@ export default function RecruiterViewPage() {
                   allowFullScreen
                 />
               </div>
-            ) : selectedProject.image ? (
-              <div className="w-full h-56 sm:h-72 rounded-xl overflow-hidden bg-stone-100 dark:bg-zinc-950 border border-stone-200 dark:border-zinc-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={selectedProject.image} 
-                  alt={selectedProject.title} 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-            ) : null}
+            ) : (() => {
+              const galleryImages = Array.from(new Set([selectedProject.image, ...(selectedProject.images || [])].filter(Boolean))) as string[];
+              if (galleryImages.length === 0) return null;
+              const displayImg = activeModalImage || galleryImages[0];
+
+              return (
+                <div className="flex flex-col gap-3">
+                  <div className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-[var(--bg-body)] border border-[var(--border-color)] relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={displayImg} 
+                      alt={selectedProject.title} 
+                      className="w-full h-full object-cover transition-all duration-300" 
+                    />
+                  </div>
+
+                  {galleryImages.length > 1 && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                        Visualization Gallery ({galleryImages.length} Pictures)
+                      </span>
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5">
+                        {galleryImages.map((imgUrl, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setActiveModalImage(imgUrl)}
+                            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                              displayImg === imgUrl 
+                                ? 'border-[var(--accent)] scale-105 shadow-md' 
+                                : 'border-[var(--border-color)] opacity-60 hover:opacity-100'
+                            }`}
+                            title={`View picture ${idx + 1}`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={imgUrl} alt={`Visualization ${idx + 1}`} className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Detailed Description */}
-            <div className="flex flex-col gap-2 border-t border-stone-100 dark:border-zinc-800 pt-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">
+            <div className="flex flex-col gap-2 border-t border-[var(--border-color)] pt-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
                 Project Overview & Detailed Explanation
               </h4>
-              <p className="text-xs sm:text-sm text-stone-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
-                {selectedProject.description}
-              </p>
+              {selectedProject.detailed_description ? (
+                <div className="flex flex-col gap-3">
+                  {selectedProject.description && (
+                    <div className="text-xs font-medium text-[var(--text-secondary)] italic bg-[var(--bg-body)] p-3 rounded-lg border border-[var(--border-color)]">
+                      "{selectedProject.description}"
+                    </div>
+                  )}
+                  <p className="text-xs sm:text-sm text-[var(--text-primary)] opacity-90 leading-relaxed whitespace-pre-line">
+                    {selectedProject.detailed_description}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs sm:text-sm text-[var(--text-primary)] opacity-90 leading-relaxed whitespace-pre-line">
+                  {selectedProject.description}
+                </p>
+              )}
             </div>
 
             {/* Key Metrics / NDA */}
@@ -1470,8 +1603,8 @@ export default function RecruiterViewPage() {
               const metrics = (selectedProject.technologies || []).filter((t: string) => t.includes('%') || (t.startsWith('+') && !isNaN(parseInt(t.charAt(1)))));
               const ndaNotices = (selectedProject.technologies || []).filter((t: string) => t.toLowerCase().includes('nda'));
               return (metrics.length > 0 || ndaNotices.length > 0) && (
-                <div className="flex flex-col gap-2 bg-stone-50 dark:bg-zinc-800/50 p-3.5 rounded-xl border border-stone-200/40 dark:border-zinc-800">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">
+                <div className="flex flex-col gap-2 bg-[var(--bg-body)] p-3.5 rounded-xl border border-[var(--border-color)]">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
                     Key Impact & Requirements
                   </h4>
                   <div className="flex flex-wrap gap-3">
@@ -1481,7 +1614,7 @@ export default function RecruiterViewPage() {
                       </div>
                     ))}
                     {ndaNotices.map((nda: string) => (
-                      <div key={nda} className="text-xs font-mono text-stone-500 dark:text-zinc-400 flex items-center gap-1.5 italic">
+                      <div key={nda} className="text-xs font-mono text-[var(--text-muted)] flex items-center gap-1.5 italic">
                         <i className="fas fa-lock text-[10px]"></i> {nda}
                       </div>
                     ))}
@@ -1490,17 +1623,17 @@ export default function RecruiterViewPage() {
               );
             })()}
 
-            {/* Technologies */}
+            {/* Tools, Skills & Technologies */}
             {selectedProject.technologies && selectedProject.technologies.length > 0 && (
               <div className="flex flex-col gap-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500 font-mono">
-                  Technologies & Tech Stack
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
+                  Tools, Skills & Technologies
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedProject.technologies.map((tech: string) => (
                     <span 
                       key={tech} 
-                      className="text-xs font-mono text-stone-700 dark:text-zinc-300 bg-stone-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md border border-stone-200 dark:border-zinc-700"
+                      className="text-xs font-mono text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-md border border-[var(--border-color)]"
                     >
                       {tech}
                     </span>
@@ -1510,7 +1643,7 @@ export default function RecruiterViewPage() {
             )}
 
             {/* Modal Actions Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-stone-100 dark:border-zinc-800 mt-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--border-color)] mt-2">
               <div className="flex flex-wrap gap-3">
                 {(() => {
                   const projectLinks = selectedProject.links && Array.isArray(selectedProject.links) && selectedProject.links.length > 0
@@ -1539,7 +1672,7 @@ export default function RecruiterViewPage() {
 
               <button
                 onClick={() => setSelectedProject(null)}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-stone-700 dark:text-zinc-200 text-xs font-semibold rounded-xl transition-all active:scale-95"
+                className="px-4 py-2 bg-[var(--bg-body)] hover:opacity-80 text-[var(--text-primary)] border border-[var(--border-color)] text-xs font-semibold rounded-xl transition-all active:scale-95 cursor-pointer"
               >
                 Close
               </button>

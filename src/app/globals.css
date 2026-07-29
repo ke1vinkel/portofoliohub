@@ -47,39 +47,7 @@
   --bg-pattern-opacity: 1;
 }
 
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #121214; /* soft charcoal zinc-grey */
-  --surface: rgba(24, 24, 28, 0.75);
-  --surface-alt: #18181b;
-  --surface-card: rgba(28, 28, 33, 0.85);
-  --border: rgba(255, 255, 255, 0.07);
-  --border-light: rgba(255, 255, 255, 0.04);
-  --text: #f4f4f5;
-  --text-muted: #a1a1aa;
-  --text-light: #71717a;
-  --primary: #2dd4bf; /* neon responsive teal */
-  --primary-light: #5eead4;
-  --accent: #2dd4bf;
-  --accent-hover: #5eead4;
-  --accent-light: rgba(45, 212, 191, 0.08);
-  --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 4px 20px -8px rgba(0, 0, 0, 0.35);
-  --navbar-bg: rgba(18, 18, 20, 0.85);
-  --hero-bg: #18181b;
-  --input-bg: #18181b;
-  --badge-private-bg: #18181b;
-  --badge-private-text: #a1a1aa;
-  --toast-bg: #18181b;
-  --toast-text: #f4f4f5;
-  --modal-overlay: rgba(0, 0, 0, 0.75);
-  --public-indicator-bg: #1e293b;
-  --public-indicator-text: #93c5fd;
-  --status-card-bg: rgba(24, 24, 28, 0.9);
-  --danger-bg: #7f1d1d;
-  --cursor-glow: rgba(45, 212, 191, 0.08);
-  --bg-pattern-opacity: 0.2;
-}
+
 
 /* ============================================================
    GLOBAL STYLES & LAYOUT
@@ -376,10 +344,11 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* Brand hand cursive title styling */
+/* Brand logo simple text styling */
 .brand-hand {
-  font-family: 'Edu SA Hand', cursive;
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 1.4rem;
+  font-family: var(--font-outfit), var(--font-sans), system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.025em;
 }

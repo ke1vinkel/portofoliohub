@@ -65,12 +65,19 @@ export async function GET() {
       ...row,
       technologies: typeof row.technologies === 'string' ? JSON.parse(row.technologies || '[]') : row.technologies,
       links: typeof row.links === 'string' ? JSON.parse(row.links || '[]') : row.links,
+      images: typeof row.images === 'string' ? JSON.parse(row.images || '[]') : (Array.isArray(row.images) ? row.images : []),
+    }));
+
+    // Parse JSON columns in portfolios
+    const portfolios = portfoliosRes.rows.map((row: any) => ({
+      ...row,
+      theme_config: typeof row.theme_config === 'string' ? JSON.parse(row.theme_config || '{}') : (row.theme_config || null),
     }));
 
     return NextResponse.json({
       users,
       profiles,
-      portfolios: portfoliosRes.rows,
+      portfolios,
       projects,
       education: educationRes.rows,
       experiences: experiencesRes.rows,

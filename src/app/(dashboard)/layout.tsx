@@ -8,7 +8,7 @@ import { usePortfolio } from '@/components/providers/portfolio-provider';
 let isInitialAppLoad = true;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { authLoading, isLoggedIn, currentUser, theme, toggleTheme, logout, hasUnsavedChanges, setHasUnsavedChanges } = usePortfolio();
+  const { authLoading, isLoggedIn, currentUser, logout, hasUnsavedChanges, setHasUnsavedChanges } = usePortfolio();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -116,18 +116,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         
         <div className="flex items-center gap-3">
-          {/* Theme Selector */}
-          <button
-            onClick={toggleTheme}
-            className="w-8 h-8 rounded-full border border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
-            aria-label="Toggle Theme"
-          >
-            {theme === 'dark' ? (
-              <i className="fas fa-sun text-amber-500 text-xs"></i>
-            ) : (
-              <i className="fas fa-moon text-[var(--text-secondary)] text-xs"></i>
-            )}
-          </button>
 
           {/* Quick Logout Button */}
           <button

@@ -3,9 +3,9 @@
 import React, { createContext, useContext } from 'react';
 import { ThemeProvider, useTheme } from './theme-provider';
 import { AuthProvider, useAuth, User } from './auth-provider';
-import { DatabaseProvider, useDatabase, SimulatedDatabase, Profile, Portfolio, Project, Education, Experience, RecruiterMessage } from './db-provider';
+import { DatabaseProvider, useDatabase, SimulatedDatabase, Profile, Portfolio, Project, Education, Experience, RecruiterMessage, ThemeConfig } from './db-provider';
 
-export type { User, Profile, Portfolio, Project, Education, Experience, RecruiterMessage, SimulatedDatabase };
+export type { User, Profile, Portfolio, Project, Education, Experience, RecruiterMessage, SimulatedDatabase, ThemeConfig };
 
 interface PortfolioContextType {
   db: SimulatedDatabase;
@@ -19,7 +19,7 @@ interface PortfolioContextType {
   logout: () => Promise<void>;
   toggleTheme: () => void;
   addPortfolio: (title: string, description: string, isPublic: boolean) => Promise<string>;
-  updatePortfolio: (id: string, title: string, description: string, isPublic: boolean) => Promise<void>;
+  updatePortfolio: (id: string, title: string, description: string, isPublic: boolean, themeConfig?: ThemeConfig | null) => Promise<void>;
   deletePortfolio: (id: string) => Promise<void>;
   setActivePortfolio: (id: string) => void;
   togglePortfolioPublicStatus: (id: string) => Promise<void>;

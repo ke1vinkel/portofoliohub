@@ -24,6 +24,16 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface ThemeConfig {
+  preset?: string;
+  bg_color?: string;
+  surface_color?: string;
+  text_color?: string;
+  accent_color?: string;
+  font_style?: 'sans' | 'serif' | 'mono' | 'display';
+  card_style?: 'spotlight' | 'minimal' | 'glass' | 'bento';
+}
+
 export interface Portfolio {
   id: string;
   user_id: string;
@@ -32,6 +42,7 @@ export interface Portfolio {
   description: string | null;
   is_public: number;
   theme: string;
+  theme_config?: ThemeConfig | null;
   created_at: string;
   updated_at: string;
 }
@@ -41,7 +52,9 @@ export interface Project {
   portfolio_id: string;
   title: string;
   description: string | null;
+  detailed_description?: string | null;
   image: string | null;
+  images?: string[];
   github_url: string | null;
   live_url: string | null;
   technologies: string | null;

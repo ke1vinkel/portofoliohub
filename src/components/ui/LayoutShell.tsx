@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePortfolio } from '../providers/portfolio-provider';
 
 export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { theme, isLoggedIn, currentUser, logout, toggleTheme, hasUnsavedChanges, setHasUnsavedChanges } = usePortfolio();
+  const { isLoggedIn, currentUser, logout, hasUnsavedChanges, setHasUnsavedChanges } = usePortfolio();
   const pathname = usePathname();
   const router = useRouter();
   const glowRef = useRef<HTMLDivElement>(null);
@@ -111,8 +111,10 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({ children 
                     router.push(currentUser.role === 'lecturer' ? '/admin' : '/dashboard');
                   }}
                 >
-                  <span className="brand-hand">PortfolioHub</span>
-                  <span className="text-xs uppercase tracking-widest text-[var(--text-secondary)] font-semibold mt-1">
+                  <span className="font-outfit font-extrabold text-[1.15rem] tracking-tight text-[var(--text)]">
+                    Portfolio<span className="text-[var(--accent)] font-extrabold">Hub</span>
+                  </span>
+                  <span className="text-xs uppercase tracking-widest text-[var(--text-secondary)] font-semibold mt-0.5">
                     · {currentUser.role === 'lecturer' ? 'Admin Portal' : 'Portal'}
                   </span>
                 </span>
@@ -179,19 +181,6 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({ children 
               </div>
  
               <div className="flex items-center gap-4">
-                <button
-                  onClick={toggleTheme}
-                  className="w-9 h-9 rounded-full border border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
-                  aria-label="Toggle Theme"
-                >
-                  {theme === 'dark' ? (
-                    <i className="fas fa-sun text-amber-500 text-sm"></i>
-                  ) : (
-                    <i className="fas fa-moon text-[var(--text-secondary)] text-sm"></i>
-                  )}
-                </button>
- 
-                <div className="h-4 w-px bg-[var(--border)]" />
  
                 <div className="flex items-center gap-2">
                   <span className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)]">
