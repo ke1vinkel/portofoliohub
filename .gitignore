@@ -1,0 +1,68 @@
+# Dependencies & Package Managers
+node_modules/
+/node_modules
+/.pnp
+.pnp.js
+.yarn-integrity
+.pnpm-store/
+
+# Next.js Build, Cache & Output
+/.next/
+/out/
+/build/
+/dist/
+/.turbo/
+/.cache/
+*.tsbuildinfo
+.eslintcache
+
+# Local Environment Variables and Secrets (CRITICAL)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env*.local
+.env*
+**/.env
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
+**/.env*.local
+**/.env*
+
+# Explicitly allow template/example files for reference
+!.env.example
+!**/.env.example
+!.env.template
+!**/.env.template
+
+# Keys & Certificates
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+**/*.pem
+**/*.key
+
+# Databases & Cache
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+**/*.db
+**/*.sqlite3
+
+# OS & IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.agents/
