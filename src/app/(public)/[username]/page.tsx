@@ -2,6 +2,24 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import {
+  Lock,
+  EyeOff,
+  FileText,
+  Settings,
+  MapPin,
+  GraduationCap,
+  Send,
+  Globe,
+  Mail,
+  ArrowRight,
+  Maximize2,
+  ExternalLink,
+  Link as LinkIcon,
+  X,
+  Star,
+} from 'lucide-react';
+import { GithubIcon, LinkedinIcon, TwitterIcon } from '@/components/ui/SocialIcons';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
 import { formatDate, formatExternalUrl, normalizeEmbedUrl } from '@/lib/utils';
 
@@ -1068,7 +1086,7 @@ export default function RecruiterViewPage() {
       {isLecturer && (
         <div className="relative z-20 bg-stone-900 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 flex justify-between items-center shadow-md border-b border-stone-800 w-full">
           <span className="flex items-center gap-1.5">
-            <i className="fas fa-lock text-amber-500"></i> Lecturer Preview Mode {isPrivate && '• Private Content'}
+            <Lock className="size-3 text-amber-500 inline" /> Lecturer Preview Mode {isPrivate && '• Private Content'}
           </span>
           <button
             onClick={() => router.push('/admin')}
@@ -1082,7 +1100,7 @@ export default function RecruiterViewPage() {
       {isOwner && isPrivate && !isLecturer && (
         <div className="relative z-20 bg-stone-900 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 flex justify-between items-center shadow-md border-b border-stone-800 w-full">
           <span className="flex items-center gap-1.5">
-            <i className="fas fa-eye-slash text-amber-500"></i> Owner Preview Mode (Private Page Preview)
+            <EyeOff className="size-3 text-amber-500 inline" /> Owner Preview Mode (Private Page Preview)
           </span>
           <button
             onClick={() => router.push('/dashboard')}
@@ -1116,7 +1134,7 @@ export default function RecruiterViewPage() {
                 rel="noreferrer"
                 className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] px-3 py-1.5 rounded transition-all flex items-center gap-1.5 hover:bg-[var(--accent-light)]"
               >
-                <i className="fas fa-file-pdf"></i> CV
+                <FileText className="size-3.5 inline" /> CV
               </a>
             )}
             {currentUser && (
@@ -1125,7 +1143,7 @@ export default function RecruiterViewPage() {
                 className="settings-btn-premium"
                 aria-label="Settings"
               >
-                <i className="fas fa-cog"></i>
+                <Settings className="size-3.5" />
               </button>
             )}
           </div>
@@ -1174,15 +1192,15 @@ export default function RecruiterViewPage() {
 
                 
                 <div className="intro-meta-premium">
-                  <span>
-                    <i className="fas fa-map-marker-alt"></i> {profile?.location || 'Jakarta'}
+                  <span className="flex items-center gap-1">
+                    <MapPin className="size-3.5 text-[var(--accent)] inline" /> {profile?.location || 'Jakarta'}
                   </span>
-                  <span>
-                    <i className="fas fa-graduation-cap"></i> {profile?.university || 'Binus University'}
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="size-3.5 text-[var(--accent)] inline" /> {profile?.university || 'Binus University'}
                   </span>
                   {profile?.hero_badge_text && (
-                    <span className="status-meta">
-                      <i className="fas fa-paper-plane"></i> {profile.hero_badge_text}
+                    <span className="status-meta flex items-center gap-1">
+                      <Send className="size-3 text-[var(--accent)] inline" /> {profile.hero_badge_text}
                     </span>
                   )}
                 </div>
@@ -1191,27 +1209,27 @@ export default function RecruiterViewPage() {
                 <div className="intro-social-premium">
                   {profile?.github && (
                     <a href={formatExternalUrl(profile.github, 'github')} target="_blank" rel="noreferrer" aria-label="GitHub">
-                      <i className="fab fa-github"></i>
+                      <GithubIcon className="size-4" />
                     </a>
                   )}
                   {profile?.linkedin && (
                     <a href={formatExternalUrl(profile.linkedin, 'linkedin')} target="_blank" rel="noreferrer" aria-label="LinkedIn">
-                      <i className="fab fa-linkedin-in"></i>
+                      <LinkedinIcon className="size-4" />
                     </a>
                   )}
                   {profile?.twitter && (
                     <a href={formatExternalUrl(profile.twitter, 'twitter')} target="_blank" rel="noreferrer" aria-label="X">
-                      <i className="fab fa-x-twitter"></i>
+                      <TwitterIcon className="size-4" />
                     </a>
                   )}
                   {profile?.website && (
                     <a href={formatExternalUrl(profile.website, 'website')} target="_blank" rel="noreferrer" aria-label="Website">
-                      <i className="fas fa-globe"></i>
+                      <Globe className="size-4" />
                     </a>
                   )}
                   {profile?.contact_email && (
                     <a href={`mailto:${profile.contact_email}`} aria-label="Email">
-                      <i className="fas fa-envelope"></i>
+                      <Mail className="size-4" />
                     </a>
                   )}
                 </div>
@@ -1352,7 +1370,7 @@ export default function RecruiterViewPage() {
                           {/* NDA Notices */}
                           {ndaNotices.map(nda => (
                             <p key={nda} className="nda-premium animate-fadeIn text-[10px] font-mono flex items-center gap-1.5">
-                              <i className="fas fa-lock text-[var(--text-muted)] text-[9px]"></i> {nda}
+                              <Lock className="size-2.5 text-[var(--text-muted)] inline" /> {nda}
                             </p>
                           ))}
 
@@ -1380,12 +1398,6 @@ export default function RecruiterViewPage() {
                             return (
                               <div className="flex flex-wrap gap-x-4 gap-y-2">
                                 {projectLinks.map((link, idx) => {
-                                  const iconClass = link.type === 'github' 
-                                    ? 'fab fa-github' 
-                                    : link.type === 'live' 
-                                    ? 'fas fa-external-link-alt' 
-                                    : 'fas fa-link';
-                                  
                                   const labelText = link.label || (
                                     link.type === 'github' 
                                       ? 'View on GitHub' 
@@ -1402,7 +1414,7 @@ export default function RecruiterViewPage() {
                                       rel="noreferrer" 
                                       className="project-github-premium text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors flex items-center gap-1.5 w-fit mt-0"
                                     >
-                                      <i className={iconClass}></i> {labelText} <i className="fas fa-arrow-right text-[10px] transition-transform group-hover/card:translate-x-0.5"></i>
+                                      {link.type === 'github' ? <GithubIcon className="size-3.5" /> : link.type === 'live' ? <ExternalLink className="size-3.5" /> : <LinkIcon className="size-3.5" />} {labelText} <ArrowRight className="size-3 transition-transform group-hover/card:translate-x-0.5" />
                                     </a>
                                   );
                                 })}
@@ -1414,7 +1426,7 @@ export default function RecruiterViewPage() {
                             onClick={() => setSelectedProject(project)}
                             className="text-xs font-semibold text-stone-600 hover:text-[var(--accent)] dark:text-zinc-400 dark:hover:text-[var(--accent)] transition-colors flex items-center gap-1 font-mono hover:underline cursor-pointer active:scale-95 py-1 px-2 rounded hover:bg-stone-100 dark:hover:bg-zinc-800/60"
                           >
-                            View Details <i className="fas fa-expand-alt text-[10px]"></i>
+                            View Details <Maximize2 className="size-3 inline" />
                           </button>
                         </div>
                       </div>
@@ -1468,8 +1480,8 @@ export default function RecruiterViewPage() {
                     required
                   />
                   <div className="flex justify-center mt-4">
-                    <button type="submit" className="btn-primary-premium px-8 py-2.5">
-                      Send Message <i className="fas fa-paper-plane ml-1.5"></i>
+                    <button type="submit" className="btn-primary-premium px-8 py-2.5 flex items-center gap-1.5">
+                      Send Message <Send className="size-3.5 inline ml-1" />
                     </button>
                   </div>
                 </form>
@@ -1615,7 +1627,7 @@ export default function RecruiterViewPage() {
                     ))}
                     {ndaNotices.map((nda: string) => (
                       <div key={nda} className="text-xs font-mono text-[var(--text-muted)] flex items-center gap-1.5 italic">
-                        <i className="fas fa-lock text-[10px]"></i> {nda}
+                        <Lock className="size-3 inline" /> {nda}
                       </div>
                     ))}
                   </div>
@@ -1653,7 +1665,6 @@ export default function RecruiterViewPage() {
                         ...(selectedProject.live_url ? [{ type: 'live', url: selectedProject.live_url, label: '' }] : [])
                       ];
                   return projectLinks.map((link, idx) => {
-                    const iconClass = link.type === 'github' ? 'fab fa-github' : link.type === 'live' ? 'fas fa-external-link-alt' : 'fas fa-link';
                     const labelText = link.label || (link.type === 'github' ? 'GitHub Repository' : link.type === 'live' ? 'Live Demo' : 'Visit Link');
                     return (
                       <a
@@ -1663,7 +1674,7 @@ export default function RecruiterViewPage() {
                         rel="noreferrer"
                         className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold rounded-xl transition-all shadow-sm flex items-center gap-2 active:scale-95"
                       >
-                        <i className={iconClass}></i> {labelText}
+                        {link.type === 'github' ? <GithubIcon className="size-3.5" /> : link.type === 'live' ? <ExternalLink className="size-3.5" /> : <LinkIcon className="size-3.5" />} {labelText}
                       </a>
                     );
                   });

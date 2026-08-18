@@ -1,8 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Save, Loader2, X } from 'lucide-react';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
 import { useToast } from '@/hooks/useToast';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { Label } from '@/components/ui/Label';
 
 interface DetailsTabProps {
   setIsDirty: (val: boolean) => void;
@@ -12,6 +18,7 @@ interface DetailsTabProps {
 export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) => {
   const { currentUser, updateProfile } = usePortfolio();
   const { toast, showToast } = useToast();
+  const [saving, setSaving] = useState(false);
 
   const [bio, setBio] = useState(profile?.bio || '');
   const [avatar, setAvatar] = useState(profile?.avatar || '');
@@ -22,7 +29,7 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
   const [customDomain, setCustomDomain] = useState(profile?.custom_domain || '');
   const [cvUrl, setCvUrl] = useState(profile?.cv_url || '');
   const [heroBadge, setHeroBadge] = useState(profile?.hero_badge_text || '✦ Available for opportunities');
-  
+
   // Typing Effect
   const [typingWords, setTypingWords] = useState((profile?.typing_words || []).join(', '));
   const [typingSpeed, setTypingSpeed] = useState(profile?.typing_speed || 100);
@@ -44,33 +51,32 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
   const [contactEmail, setContactEmail] = useState(profile?.contact_email || '');
 
   // Track dirtiness
-  const isDirty = profile ? (
-    bio !== (profile.bio || '') ||
-    avatar !== (profile.avatar || '') ||
-    showAvatar !== (profile.show_avatar !== false) ||
-    major !== (profile.major || '') ||
-    university !== (profile.university || '') ||
-    location !== (profile.location || 'Jakarta') ||
-    customDomain !== (profile.custom_domain || '') ||
-    cvUrl !== (profile.cv_url || '') ||
-    heroBadge !== (profile.hero_badge_text || '') ||
-    typingWords !== (profile.typing_words?.join(', ') || '') ||
-    Number(typingSpeed) !== (profile.typing_speed || 100) ||
-    Number(typingDeleteSpeed) !== (profile.typing_delete_speed || 50) ||
-    Number(typingPause) !== (profile.typing_pause_duration || 2000) ||
-    secSkills !== (profile.sections?.show_skills !== false) ||
-    secProjects !== (profile.sections?.show_projects !== false) ||
-    secExperience !== (profile.sections?.show_experience !== false) ||
-    secEducation !== (profile.sections?.show_education !== false) ||
-    secContact !== (profile.sections?.show_contact !== false) ||
-    github !== (profile.github || '') ||
-    linkedin !== (profile.linkedin || '') ||
-    twitter !== (profile.twitter || '') ||
-    website !== (profile.website || '') ||
-    contactEmail !== (profile.contact_email || '')
-  ) : false;
+  const isDirty = profile
+    ? bio !== (profile.bio || '') ||
+      avatar !== (profile.avatar || '') ||
+      showAvatar !== (profile.show_avatar !== false) ||
+      major !== (profile.major || '') ||
+      university !== (profile.university || '') ||
+      location !== (profile.location || 'Jakarta') ||
+      customDomain !== (profile.custom_domain || '') ||
+      cvUrl !== (profile.cv_url || '') ||
+      heroBadge !== (profile.hero_badge_text || '') ||
+      typingWords !== (profile.typing_words?.join(', ') || '') ||
+      Number(typingSpeed) !== (profile.typing_speed || 100) ||
+      Number(typingDeleteSpeed) !== (profile.typing_delete_speed || 50) ||
+      Number(typingPause) !== (profile.typing_pause_duration || 2000) ||
+      secSkills !== (profile.sections?.show_skills !== false) ||
+      secProjects !== (profile.sections?.show_projects !== false) ||
+      secExperience !== (profile.sections?.show_experience !== false) ||
+      secEducation !== (profile.sections?.show_education !== false) ||
+      secContact !== (profile.sections?.show_contact !== false) ||
+      github !== (profile.github || '') ||
+      linkedin !== (profile.linkedin || '') ||
+      twitter !== (profile.twitter || '') ||
+      website !== (profile.website || '') ||
+      contactEmail !== (profile.contact_email || '')
+    : false;
 
-  // Pre-fill profile form on load or when saved profile changes from DB
   useEffect(() => {
     if (profile) {
       setBio(profile.bio || '');
@@ -82,7 +88,7 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       setCustomDomain(profile.custom_domain || '');
       setCvUrl(profile.cv_url || '');
       setHeroBadge(profile.hero_badge_text || '✦ Available for opportunities');
-      
+
       setTypingWords((profile.typing_words || []).join(', '));
       setTypingSpeed(profile.typing_speed || 100);
       setTypingDeleteSpeed(profile.typing_delete_speed || 50);
@@ -107,20 +113,23 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
     return () => setIsDirty(false);
   }, [isDirty, setIsDirty]);
 
-  if (!currentUser || !profile) return (
-    <div className="flex-grow flex flex-col justify-center items-center p-6 min-h-[20vh]">
-      <div className="w-8 h-8 rounded-full border-4 border-stone-200 border-t-[var(--accent)] animate-spin" />
-      <span className="text-xs text-stone-500 mt-3 font-mono">Loading profile...</span>
-    </div>
-  );
+  if (!currentUser || !profile) {
+    return (
+      <div className="flex flex-col justify-center items-center p-8">
+        <Loader2 className="size-6 text-primary animate-spin" />
+        <span className="text-xs text-muted-foreground mt-3 font-mono">Loading profile...</span>
+      </div>
+    );
+  }
 
   const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setSaving(true);
+
     const wordsArray = typingWords
       .split(',')
-      .map(w => w.trim())
-      .filter(w => w.length > 0);
+      .map((w) => w.trim())
+      .filter((w) => w.length > 0);
 
     await updateProfile(currentUser.id, {
       bio,
@@ -150,299 +159,322 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       contact_email: contactEmail,
     });
 
-    showToast('Profile settings saved! ✅');
+    setSaving(false);
+    showToast('Profile settings saved successfully');
   };
 
   return (
     <form onSubmit={handleSaveDetails} className="space-y-6" autoComplete="off">
-      {/* Toast Notification Banner */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-[var(--accent)] text-white rounded-full shadow-lg text-xs font-semibold tracking-wide animate-bounce">
-          {toast}
-        </div>
-      )}
-
       {/* Academic Profile Card */}
-      <div className="glass-card p-4 space-y-4">
-        <h3 className="font-semibold text-sm text-stone-950 dark:text-white border-b border-stone-100 dark:border-zinc-700/60 pb-2">
-          Academic Profile
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="input-label">Major</label>
-            <input
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Academic Profile</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="major-input">Major</Label>
+            <Input
+              id="major-input"
               type="text"
               value={major}
               onChange={(e) => setMajor(e.target.value)}
-              className="input-field"
               placeholder="e.g. Computer Science"
               required
             />
           </div>
-          <div>
-            <label className="input-label">University</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="university-input">University</Label>
+            <Input
+              id="university-input"
               type="text"
               value={university}
               onChange={(e) => setUniversity(e.target.value)}
-              className="input-field"
-              placeholder="e.g. Stanford University"
+              placeholder="e.g. Binus University"
               required
             />
           </div>
-          <div>
-            <label className="input-label">Location</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="location-input">Location</Label>
+            <Input
+              id="location-input"
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="input-field"
               placeholder="e.g. Jakarta, Indonesia"
               required
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* About & Avatar Settings */}
-      <div className="glass-card p-4 space-y-4">
-        <h3 className="font-semibold text-sm text-stone-950 dark:text-white border-b border-stone-100 dark:border-zinc-700/60 pb-2">
-          About & Avatar
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <label className="input-label">Bio / Introduction</label>
-            <textarea
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">About & Avatar</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="bio-input">Bio / Introduction</Label>
+            <Textarea
+              id="bio-input"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="input-field"
-              placeholder="e.g. I am a software engineer focused on product design..."
+              placeholder="Brief professional summary about yourself..."
               rows={4}
               required
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="input-label">Avatar Image URL (Optional)</label>
-              <input
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div className="space-y-1.5">
+              <Label htmlFor="avatar-input">Avatar Image URL (Optional)</Label>
+              <Input
+                id="avatar-input"
                 type="text"
                 value={avatar}
                 onChange={(e) => setAvatar(e.target.value)}
-                className="input-field"
-                placeholder="https://example.com/avatar.jpg"
+                placeholder="https://images.unsplash.com/..."
               />
             </div>
-            <div className="flex items-center gap-3 pt-6">
-              <input
-                type="checkbox"
-                id="showAvatar"
-                checked={showAvatar}
-                onChange={(e) => setShowAvatar(e.target.checked)}
-                className="w-4 h-4 rounded border-stone-300 dark:border-zinc-700 text-[var(--accent)] focus:ring-[var(--accent)]"
-              />
-              <label htmlFor="showAvatar" className="text-xs font-semibold text-stone-700 dark:text-zinc-300 cursor-pointer select-none">
-                Show Avatar Picture on Public Page
+            <div className="pt-5">
+              <label className="checkbox" htmlFor="showAvatar">
+                <input
+                  type="checkbox"
+                  id="showAvatar"
+                  checked={showAvatar}
+                  onChange={(e) => setShowAvatar(e.target.checked)}
+                />
+                <span className="text-xs">Show avatar picture on public profile</span>
               </label>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Hero Header Customization */}
-      <div className="glass-card p-4 space-y-4">
-        <h3 className="font-semibold text-sm text-stone-950 dark:text-white border-b border-stone-100 dark:border-zinc-700/60 pb-2">
-          Hero Customization
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="input-label">Status Badge Text</label>
-            <input
-              type="text"
-              value={heroBadge}
-              onChange={(e) => setHeroBadge(e.target.value)}
-              className="input-field"
-              placeholder="e.g. ✦ Open to opportunities"
-            />
-          </div>
-          <div>
-            <label className="input-label">CV Document URL (Optional)</label>
-            <input
-              type="text"
-              value={cvUrl}
-              onChange={(e) => setCvUrl(e.target.value)}
-              className="input-field"
-              placeholder="https://example.com/cv.pdf"
-            />
-          </div>
-        </div>
-
-        {/* Dynamic Typing Title */}
-        <div className="space-y-3 pt-2">
-          <h4 className="text-xs font-bold text-stone-900 dark:text-zinc-300">Typing Effect Carousel</h4>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <label className="input-label">Typing Words (separated by comma)</label>
-              <input
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Hero Customization</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="badge-input">Status Badge Text</Label>
+              <Input
+                id="badge-input"
                 type="text"
-                value={typingWords}
-                onChange={(e) => setTypingWords(e.target.value)}
-                className="input-field"
-                placeholder="e.g. Developer, Designer, Student"
+                value={heroBadge}
+                onChange={(e) => setHeroBadge(e.target.value)}
+                placeholder="e.g. ✦ Available for opportunities"
               />
             </div>
-            <div>
-              <label className="input-label">Typing Speed (ms)</label>
-              <input
-                type="number"
-                value={typingSpeed}
-                onChange={(e) => setTypingSpeed(Number(e.target.value))}
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="input-label">Pause Duration (ms)</label>
-              <input
-                type="number"
-                value={typingPause}
-                onChange={(e) => setTypingPause(Number(e.target.value))}
-                className="input-field"
+            <div className="space-y-1.5">
+              <Label htmlFor="cv-input">CV Document URL (Optional)</Label>
+              <Input
+                id="cv-input"
+                type="text"
+                value={cvUrl}
+                onChange={(e) => setCvUrl(e.target.value)}
+                placeholder="https://example.com/cv.pdf"
               />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Social Links & Custom domain */}
-      <div className="glass-card p-4 space-y-4">
-        <h3 className="font-semibold text-sm text-stone-950 dark:text-white border-b border-stone-100 dark:border-zinc-700/60 pb-2">
-          Social Links & Domain
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="input-label">Custom Domain (Optional)</label>
-            <input
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Typing Effect Carousel
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2 space-y-1.5">
+                <Label htmlFor="typing-input">Words (separated by comma)</Label>
+                <Input
+                  id="typing-input"
+                  type="text"
+                  value={typingWords}
+                  onChange={(e) => setTypingWords(e.target.value)}
+                  placeholder="Software Developer, CS Student"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="speed-input">Typing Speed (ms)</Label>
+                <Input
+                  id="speed-input"
+                  type="number"
+                  value={typingSpeed}
+                  onChange={(e) => setTypingSpeed(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pause-input">Pause (ms)</Label>
+                <Input
+                  id="pause-input"
+                  type="number"
+                  value={typingPause}
+                  onChange={(e) => setTypingPause(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Social Links & Domain */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Social Links & Domain</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="domain-input">Custom Domain (Optional)</Label>
+            <Input
+              id="domain-input"
               type="text"
               value={customDomain}
               onChange={(e) => setCustomDomain(e.target.value)}
-              className="input-field"
               placeholder="e.g. johndoe.me"
             />
           </div>
-          <div>
-            <label className="input-label">Contact Email (Optional)</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="contact-email-input">Contact Email (Optional)</Label>
+            <Input
+              id="contact-email-input"
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="input-field"
               placeholder="johndoe@example.com"
             />
           </div>
-          <div>
-            <label className="input-label">GitHub Username</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="github-input">GitHub Username</Label>
+            <Input
+              id="github-input"
               type="text"
               value={github}
               onChange={(e) => setGithub(e.target.value)}
-              className="input-field"
               placeholder="e.g. johndoe"
             />
           </div>
-          <div>
-            <label className="input-label">LinkedIn URL (Username/ID)</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="linkedin-input">LinkedIn Username / URL</Label>
+            <Input
+              id="linkedin-input"
               type="text"
               value={linkedin}
               onChange={(e) => setLinkedin(e.target.value)}
-              className="input-field"
               placeholder="e.g. johndoe"
             />
           </div>
-          <div>
-            <label className="input-label">X (Twitter) Username</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="twitter-input">X (Twitter) Username</Label>
+            <Input
+              id="twitter-input"
               type="text"
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
-              className="input-field"
               placeholder="e.g. johndoe"
             />
           </div>
-          <div>
-            <label className="input-label">Personal Website URL</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="website-input">Personal Website URL</Label>
+            <Input
+              id="website-input"
               type="text"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              className="input-field"
               placeholder="https://johndoe.com"
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Visibility Sections Toggles */}
-      <div className="glass-card p-4 space-y-4">
-        <h3 className="font-semibold text-sm text-stone-950 dark:text-white border-b border-stone-100 dark:border-zinc-700/60 pb-2">
-          Page Section Visibility Settings
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <label className="checkbox py-2 px-3 justify-start" htmlFor="secSkills">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Section Visibility</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <label className="checkbox" htmlFor="secSkills">
             <input
               id="secSkills"
               type="checkbox"
               checked={secSkills}
               onChange={(e) => setSecSkills(e.target.checked)}
             />
-            <span>Skills Block</span>
+            <span className="text-xs">Skills Block</span>
           </label>
-          <label className="checkbox py-2 px-3 justify-start" htmlFor="secProjects">
+          <label className="checkbox" htmlFor="secProjects">
             <input
               id="secProjects"
               type="checkbox"
               checked={secProjects}
               onChange={(e) => setSecProjects(e.target.checked)}
             />
-            <span>Projects Block</span>
+            <span className="text-xs">Projects Block</span>
           </label>
-          <label className="checkbox py-2 px-3 justify-start" htmlFor="secExperience">
+          <label className="checkbox" htmlFor="secExperience">
             <input
               id="secExperience"
               type="checkbox"
               checked={secExperience}
               onChange={(e) => setSecExperience(e.target.checked)}
             />
-            <span>Experience Block</span>
+            <span className="text-xs">Experience Block</span>
           </label>
-          <label className="checkbox py-2 px-3 justify-start" htmlFor="secEducation">
+          <label className="checkbox" htmlFor="secEducation">
             <input
               id="secEducation"
               type="checkbox"
               checked={secEducation}
               onChange={(e) => setSecEducation(e.target.checked)}
             />
-            <span>Education Block</span>
+            <span className="text-xs">Education Block</span>
           </label>
-          <label className="checkbox py-2 px-3 justify-start" htmlFor="secContact">
+          <label className="checkbox" htmlFor="secContact">
             <input
               id="secContact"
               type="checkbox"
               checked={secContact}
               onChange={(e) => setSecContact(e.target.checked)}
             />
-            <span>Contact Block</span>
+            <span className="text-xs">Contact Block</span>
           </label>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <div className="flex justify-end pt-2">
-        <button
-          type="submit"
-          className="px-8 py-3 rounded-full font-semibold text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-md text-xs transition-all active:scale-95 flex items-center gap-1.5"
-        >
-          Save Settings <i className="fas fa-save"></i>
-        </button>
+        <Button type="submit" disabled={saving} size="lg">
+          {saving ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="size-4" />
+              Save Details
+            </>
+          )}
+        </Button>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className="fixed right-4 bottom-4 left-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-border bg-popover p-3 pl-4 text-popover-foreground shadow-xl sm:left-auto sm:mx-0 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="min-w-0 flex-1 truncate text-xs font-medium">{toast}</p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => showToast('')}
+            aria-label="Dismiss"
+          >
+            <X className="size-3.5" />
+          </Button>
+        </div>
+      )}
     </form>
   );
 };

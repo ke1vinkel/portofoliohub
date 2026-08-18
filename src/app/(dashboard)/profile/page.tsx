@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
 import { DetailsTab } from '@/components/profile/DetailsTab';
 import { SkillsTab } from '@/components/profile/SkillsTab';
 import { TimelineTab } from '@/components/profile/TimelineTab';
+import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
   const {
@@ -75,57 +77,65 @@ export default function ProfilePage() {
 
   if (!currentUser || !profile) {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center p-6 min-h-[50vh]">
-        <div className="w-8 h-8 rounded-full border-4 border-stone-200 border-t-[var(--accent)] animate-spin" />
-        <span className="text-xs text-stone-500 mt-3 font-mono">Loading Profile Data...</span>
+      <div className="flex-1 flex flex-col justify-center items-center p-12 min-h-[50vh]">
+        <Loader2 className="size-6 text-primary animate-spin" />
+        <span className="text-xs text-muted-foreground mt-3 font-mono">Loading profile data...</span>
       </div>
     );
   }
 
   return (
-    <div className="flex-grow flex flex-col gap-5 pb-8 max-w-5xl xl:max-w-7xl 2xl:max-w-[1800px] mx-auto w-full relative animate-fadeIn">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold font-display text-stone-950 dark:text-white tracking-tight">
-          Edit Profile
-        </h2>
-        <p className="text-xs text-stone-400 dark:text-zinc-500 font-mono mt-0.5">
-          Configure settings, tooltips, and timelines
-        </p>
-      </div>
+    <div className="flex-1 flex flex-col gap-6 w-full max-w-5xl mx-auto">
+      {/* Header matching cv-gen */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/80 pb-6">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Edit Profile
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Configure settings, skills, tooltips, and timeline milestones.
+          </p>
+        </div>
 
-      {/* Profile Sections Tab Selectors */}
-      <div className="flex border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--surface)] p-1">
-        <button
-          onClick={() => setActiveTab('details')}
-          className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all ${
-            activeTab === 'details'
-              ? 'bg-[var(--accent)] text-white'
-              : 'text-stone-500 hover:text-stone-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-          }`}
-        >
-          Details
-        </button>
-        <button
-          onClick={() => setActiveTab('skills')}
-          className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all ${
-            activeTab === 'skills'
-              ? 'bg-[var(--accent)] text-white'
-              : 'text-stone-500 hover:text-stone-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-          }`}
-        >
-          Skills
-        </button>
-        <button
-          onClick={() => setActiveTab('timeline')}
-          className={`flex-1 py-2 text-center text-xs font-bold rounded-lg transition-all ${
-            activeTab === 'timeline'
-              ? 'bg-[var(--accent)] text-white'
-              : 'text-stone-500 hover:text-stone-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-          }`}
-        >
-          Timeline
-        </button>
+        {/* Segmented Control Tabs */}
+        <div className="inline-flex h-9 items-center rounded-xl bg-muted p-1 text-xs font-semibold text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => setActiveTab('details')}
+            className={cn(
+              'px-3.5 py-1 rounded-lg transition-all',
+              activeTab === 'details'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'hover:text-foreground'
+            )}
+          >
+            Details
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('skills')}
+            className={cn(
+              'px-3.5 py-1 rounded-lg transition-all',
+              activeTab === 'skills'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'hover:text-foreground'
+            )}
+          >
+            Skills
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('timeline')}
+            className={cn(
+              'px-3.5 py-1 rounded-lg transition-all',
+              activeTab === 'timeline'
+                ? 'bg-background text-foreground shadow-xs font-medium'
+                : 'hover:text-foreground'
+            )}
+          >
+            Timeline
+          </button>
+        </div>
       </div>
 
       {/* Render Active Tab Component */}

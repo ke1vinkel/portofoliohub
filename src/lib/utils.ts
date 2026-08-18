@@ -1,16 +1,8 @@
-export function cn(...classes: (string | undefined | null | boolean | Record<string, boolean>)[]) {
-  const result: string[] = [];
-  classes.forEach(c => {
-    if (!c) return;
-    if (typeof c === 'string') {
-      result.push(c);
-    } else if (typeof c === 'object') {
-      Object.entries(c).forEach(([key, value]) => {
-        if (value) result.push(key);
-      });
-    }
-  });
-  return result.join(' ');
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }
 
 export function normalizeEmbedUrl(url: string | null | undefined): string {
@@ -87,27 +79,25 @@ export function formatExternalUrl(
   let url = input.trim();
   if (!url) return '';
 
-  // If already starts with http:// or https://
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
+  // Strip duplicate or malformed protocol prefixes (e.g. "https://https:/", "https:/?", "http:/", "https//")
+  const cleanedUrl = url.replace(/^(https?:?\/*\?*)+/i, '');
 
   // Handle specific platforms if user enters just a username or handle
   if (type === 'github') {
-    const clean = url.replace(/^@/, '').replace(/^(https?:\/\/)?(www\.)?github\.com\//i, '').replace(/^\/+|\/+$/g, '');
+    const clean = cleanedUrl.replace(/^@/, '').replace(/^(www\.)?github\.com\//i, '').replace(/^\/+|\/+$/g, '');
     return `https://github.com/${clean}`;
   }
 
   if (type === 'linkedin') {
-    const clean = url.replace(/^(https?:\/\/)?(www\.)?linkedin\.com\/(in\/)?/i, '').replace(/^in\//i, '').replace(/^\/+|\/+$/g, '');
+    const clean = cleanedUrl.replace(/^(www\.)?linkedin\.com\/(in\/)?/i, '').replace(/^in\//i, '').replace(/^\/+|\/+$/g, '');
     return `https://www.linkedin.com/in/${clean}`;
   }
 
   if (type === 'twitter') {
-    const clean = url.replace(/^@/, '').replace(/^(https?:\/\/)?(www\.)?(twitter|x)\.com\//i, '').replace(/^\/+|\/+$/g, '');
+    const clean = cleanedUrl.replace(/^@/, '').replace(/^(www\.)?(twitter|x)\.com\//i, '').replace(/^\/+|\/+$/g, '');
     return `https://x.com/${clean}`;
   }
 
-  // General website / custom domain
-  return `https://${url.replace(/^\/+/, '')}`;
+  // General website / custom domain / project link
+  return `https://${cleanedUrl.replace(/^\/+/, '')}`;
 }

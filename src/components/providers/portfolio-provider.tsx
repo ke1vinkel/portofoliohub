@@ -42,7 +42,9 @@ interface PortfolioContextType {
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 const PortfolioContextAggregator: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { theme, toggleTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const theme = (resolvedTheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
+  const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   const { currentUser, isLoggedIn, authLoading, login: authLogin, logout } = useAuth();
   const {
     db,

@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LayoutDashboard, FolderKanban, User, ShieldCheck, Loader2 } from 'lucide-react';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
-
-let isInitialAppLoad = true;
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { authLoading, isLoggedIn, currentUser, logout, hasUnsavedChanges, setHasUnsavedChanges } = usePortfolio();
+  const { authLoading, isLoggedIn, currentUser, hasUnsavedChanges, setHasUnsavedChanges } = usePortfolio();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -31,136 +31,81 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!mounted || authLoading || !isLoggedIn || !currentUser) {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center bg-stone-50 dark:bg-zinc-900 p-6 min-h-screen">
-        <div className="w-8 h-8 rounded-full border-4 border-stone-200 border-t-[var(--accent)] animate-spin" />
-        <span className="text-xs text-stone-500 mt-3 font-mono">Verifying Session...</span>
+      <div className="flex-1 flex flex-col justify-center items-center bg-muted/30 p-6 min-h-[80vh]">
+        <Loader2 className="size-6 text-primary animate-spin" />
+        <span className="text-xs text-muted-foreground mt-3 font-mono">Verifying Session...</span>
       </div>
     );
   }
 
   const isLecturer = currentUser.role === 'lecturer';
 
-  // Navigation Items: Lecturer gets ONLY Admin Portal. Student gets Dashboard, Portfolios, Profile.
   const navItems = isLecturer
     ? [
         {
           label: 'Admin Portal',
           path: '/admin',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          ),
+          icon: <ShieldCheck className="size-5" />,
         },
       ]
     : [
         {
           label: 'Dashboard',
           path: '/dashboard',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="9" rx="1" />
-              <rect x="14" y="3" width="7" height="5" rx="1" />
-              <rect x="14" y="12" width="7" height="9" rx="1" />
-              <rect x="3" y="16" width="7" height="5" rx="1" />
-            </svg>
-          ),
+          icon: <LayoutDashboard className="size-5" />,
         },
         {
           label: 'Portfolios',
           path: '/portfolios',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-          ),
+          icon: <FolderKanban className="size-5" />,
         },
         {
           label: 'Profile',
           path: '/profile',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          ),
+          icon: <User className="size-5" />,
         },
       ];
 
-  const handleLogout = () => {
-    if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) return;
-    setHasUnsavedChanges(false);
-    logout();
-    router.push('/login');
-  };
-
   return (
-    <div className="flex-grow flex flex-col bg-[var(--bg)] min-h-screen text-[var(--text)] pb-20 sm:pb-12 relative font-outfit">
-      
-
-
-
-
-      {/* Top Navbar Header (Mobile Only) */}
-      <header className="sm:hidden sticky top-0 z-30 w-full px-5 py-4 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md border-b border-[var(--border)] flex justify-between items-center">
-        <div className="flex items-center gap-1.5 animate-fadeIn">
-          <svg className="w-5 h-5 text-[var(--accent)]" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-          </svg>
-          <span className="font-semibold text-[var(--text)] text-sm tracking-tight">PortfolioHub</span>
-          {currentUser.role === 'lecturer' && (
-            <span className="text-[9px] uppercase tracking-widest bg-[var(--accent-light)] text-[var(--accent)] px-1.5 py-0.5 rounded font-mono font-bold">
-              Lecturer
-            </span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-
-          {/* Quick Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="w-8 h-8 rounded-full border border-red-200 dark:border-red-950 bg-red-50 dark:bg-red-950/40 text-red-600 flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all"
-            aria-label="Log Out"
-          >
-            <i className="fas fa-sign-out-alt text-xs"></i>
-          </button>
-        </div>
-      </header>
-
+    <div className="flex-1 flex flex-col bg-muted/20 pb-16 sm:pb-0">
       {/* Main Workspace Frame */}
-      <div className="flex-1 w-full max-w-[1200px] lg:max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto px-4 lg:px-8 py-5 lg:py-8 flex flex-col z-10 animate-fadeIn">
+      <div className="ui-page-enter flex-1 w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-10 xl:px-14 2xl:px-16 flex flex-col">
         {children}
       </div>
 
-      {/* Bottom Sticky Mobile Navigation */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto z-40 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-t border-[var(--border)] py-2.5 px-4 flex justify-around items-center">
+      {/* Bottom Mobile Navigation */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur border-t border-border py-2 px-6 flex justify-around items-center">
         {navItems.map((item) => {
-          const isActive = !!pathname && (pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path)));
+          const isActive =
+            !!pathname &&
+            (pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path)));
           return (
             <Link
               key={item.path}
               href={item.path}
               onClick={(e) => {
-                if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                if (
+                  hasUnsavedChanges &&
+                  !window.confirm('You have unsaved changes. Are you sure you want to leave?')
+                ) {
                   e.preventDefault();
                 } else {
                   setHasUnsavedChanges(false);
                 }
               }}
-              className={`flex flex-col items-center gap-0.5 text-center transition-all ${
-                isActive 
-                  ? 'text-[var(--accent)] scale-105 font-medium' 
-                  : 'text-stone-400 dark:text-zinc-500 hover:text-stone-600'
-              }`}
+              className={cn(
+                'flex flex-col items-center gap-1 text-center transition-colors py-1 px-3 rounded-lg',
+                isActive
+                  ? 'text-primary font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
             >
               {item.icon}
-              <span className="text-[10px] tracking-tight">{item.label}</span>
+              <span className="text-[11px] font-medium tracking-tight">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-
     </div>
   );
 }

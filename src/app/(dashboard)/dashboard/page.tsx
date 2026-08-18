@@ -3,9 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  Copy,
+  Share2,
+  ExternalLink,
+  Pencil,
+  Trash2,
+  FolderKanban,
+  UserCog,
+  Mail,
+  Globe,
+  Check,
+  Loader2,
+  AlertTriangle,
+  X,
+  Radio,
+  Eye,
+} from 'lucide-react';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
   const {
@@ -22,18 +41,19 @@ export default function DashboardPage() {
   const router = useRouter();
   const { toast, showToast } = useToast();
   const [mounted, setMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Delete message custom modal states
+  // Delete message modal state
   const [deleteMsgId, setDeleteMsgId] = useState<string | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [activeViewMessage, setActiveViewMessage] = useState<any | null>(null);
 
-  // Delete portfolio custom modal state
+  // Delete portfolio modal state
   const [deletePortId, setDeletePortId] = useState<string | null>(null);
 
   const handleOpenDeleteModal = (id: string) => {
@@ -46,7 +66,7 @@ export default function DashboardPage() {
     if (deleteConfirmText === 'I am deleting this with full awareness.') {
       if (deleteMsgId) {
         deleteRecruiterMessage(deleteMsgId);
-        showToast('Message deleted successfully 🗑️');
+        showToast('Message deleted successfully');
       }
       setDeleteMsgId(null);
     } else {
@@ -54,30 +74,27 @@ export default function DashboardPage() {
     }
   };
 
-
-
   if (!currentUser) return null;
 
   if (!dbLoaded) {
     return (
-      <div className="flex-grow flex flex-col justify-center items-center bg-stone-50 dark:bg-zinc-900 p-6 min-h-[50vh] text-center text-stone-900 dark:text-zinc-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--text-primary)] dark:border-[var(--accent)]"></div>
-        <p className="text-xs text-stone-400 mt-3 font-mono animate-pulse">Loading dashboard...</p>
+      <div className="flex-1 flex flex-col justify-center items-center p-12 min-h-[50vh] text-center">
+        <Loader2 className="size-6 text-primary animate-spin" />
+        <p className="text-xs text-muted-foreground mt-3 font-mono">Loading dashboard...</p>
       </div>
     );
   }
 
   // Filter portfolios owned by user
-  const userPortfolios = db.portfolios.filter(p => p.user_id === currentUser.id);
-  const activePortfolio = db.portfolios.find(p => p.id === activePortfolioId) || userPortfolios[0];
+  const userPortfolios = db.portfolios.filter((p) => p.user_id === currentUser.id);
+  const activePortfolio = db.portfolios.find((p) => p.id === activePortfolioId) || userPortfolios[0];
 
   // Count metrics
   const totalPortfolios = userPortfolios.length;
-  const publicPortfolios = userPortfolios.filter(p => p.is_public === 1).length;
-
-  const userPortfolioIds = userPortfolios.map(p => p.id);
-  const totalProjects = db.projects.filter(p => userPortfolioIds.includes(p.portfolio_id)).length;
-  const recruiterMessages = db.messages?.filter(m => m.student_id === currentUser.id) || [];
+  const publicPortfolios = userPortfolios.filter((p) => p.is_public === 1).length;
+  const userPortfolioIds = userPortfolios.map((p) => p.id);
+  const totalProjects = db.projects.filter((p) => userPortfolioIds.includes(p.portfolio_id)).length;
+  const recruiterMessages = db.messages?.filter((m) => m.student_id === currentUser.id) || [];
 
   // Generate recruiter link
   const getRecruiterUrl = () => {
@@ -93,32 +110,31 @@ export default function DashboardPage() {
   const copyUrlToClipboard = () => {
     const url = getRecruiterUrl();
     if (!url) return;
-    navigator.clipboard.writeText(url)
-      .then(() => showToast('Copied to clipboard!'))
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        setCopied(true);
+        showToast('Copied to clipboard!');
+        setTimeout(() => setCopied(false), 2000);
+      })
       .catch(() => showToast('Failed to copy.'));
   };
 
   const handleShare = () => {
     const url = getRecruiterUrl();
     if (navigator.share) {
-      navigator.share({
-        title: `${currentUser.name}'s Portfolio`,
-        text: 'Check out my professional portfolio:',
-        url,
-      }).catch(() => {});
+      navigator
+        .share({
+          title: `${currentUser.name}'s Portfolio`,
+          text: 'Check out my professional portfolio:',
+          url,
+        })
+        .catch(() => {});
     } else {
       copyUrlToClipboard();
     }
   };
 
-  // Switch public selection dropdown
-  const handleActivePortfolioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = e.target.value;
-    setActivePortfolio(id);
-    showToast('Public portfolio updated!');
-  };
-
-  // Make public/private toggle
   const handleStatusToggle = () => {
     if (activePortfolio) {
       togglePortfolioPublicStatus(activePortfolio.id);
@@ -126,14 +142,10 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    setDeletePortId(id);
-  };
-
   const handleConfirmDeletePort = async () => {
     if (deletePortId) {
       await deletePortfolio(deletePortId);
-      showToast('Portfolio deleted 🗑️');
+      showToast('Portfolio deleted');
     }
     setDeletePortId(null);
   };
@@ -143,298 +155,315 @@ export default function DashboardPage() {
     .slice(0, 2);
 
   return (
-    <div className="flex-grow flex flex-col gap-5 pb-8 max-w-5xl xl:max-w-7xl 2xl:max-w-[1800px] mx-auto w-full relative">
-      
-      {/* Toast Notification Banner */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-[var(--accent)] text-white rounded-full shadow-lg text-xs font-semibold tracking-wide animate-bounce">
-          {toast}
-        </div>
-      )}
-
+    <div className="flex-1 flex flex-col gap-8 w-full max-w-7xl mx-auto">
       {/* Hero Welcome Banner */}
-      <div>
-        <h2 className="text-2xl lg:text-3.5xl font-bold font-display text-stone-950 dark:text-white tracking-tight">
-          Hello, {currentUser.name.split(' ')[0]}
-        </h2>
-        <p className="text-xs lg:text-sm text-stone-500 dark:text-zinc-400 font-mono mt-1">
-          {db.profiles[currentUser.id]?.major || 'Student'} • {db.profiles[currentUser.id]?.university || 'University'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-border/80 pb-6">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Hello, {currentUser.name.split(' ')[0]}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {db.profiles[currentUser.id]?.major || 'Student'} · {db.profiles[currentUser.id]?.university || 'University'}
+          </p>
+        </div>
+
+        {/* 3-Col Bento Metrics */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 text-right">
+          <div className="rounded-xl border border-border/60 bg-card p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-semibold text-foreground">{totalPortfolios}</div>
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+              Portfolios
+            </div>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-card p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+              {publicPortfolios}
+            </div>
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+              Public
+            </div>
+          </div>
+          <div className="rounded-xl border border-border/60 bg-card p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-semibold text-foreground">{totalProjects}</div>
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+              Projects
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* 3-Col Bento Metrics Grid */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="glass-card p-4 lg:p-6 flex flex-col items-center justify-center text-center transition-all hover:scale-[1.02]">
-          <span className="text-2xl lg:text-4xl font-bold font-display text-[var(--text-primary)]">{totalPortfolios}</span>
-          <span className="text-[10px] lg:text-xs text-[var(--text-muted)] uppercase tracking-widest mt-1.5 font-bold">Portfolios</span>
-        </div>
-        
-        <div className="glass-card p-4 lg:p-6 flex flex-col items-center justify-center text-center transition-all hover:scale-[1.02]">
-          <span className="text-2xl lg:text-4xl font-bold font-display text-emerald-600 dark:text-emerald-400">{publicPortfolios}</span>
-          <span className="text-[10px] lg:text-xs text-[var(--text-muted)] uppercase tracking-widest mt-1.5 font-bold">Public</span>
-        </div>
-
-        <div className="glass-card p-4 lg:p-6 flex flex-col items-center justify-center text-center transition-all hover:scale-[1.02]">
-          <span className="text-2xl lg:text-4xl font-bold font-display text-[var(--text-primary)]">{totalProjects}</span>
-          <span className="text-[10px] lg:text-xs text-[var(--text-muted)] uppercase tracking-widest mt-1.5 font-bold">Projects</span>
-        </div>
-      </div>
-
-      {/* Grid columns section */}
+      {/* Main 2-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Columns (2/3 width on desktop): Active Portfolio and Recent Portfolios */}
-        <div className="lg:col-span-2 flex flex-col gap-6 w-full">
-          {/* Live Status Control Card */}
+        {/* Left Column (2/3 width) */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* Active Live Portfolio Control Card */}
           {activePortfolio ? (
-            <div className="glass-card p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+            <Card className="hover:border-border/80">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div className="flex items-center gap-2.5">
                   <span className={`status-dot ${activePortfolio.is_public === 1 ? 'public' : 'private'}`} />
-                  <h3 className="font-semibold text-sm text-stone-900 dark:text-zinc-100">
-                    {activePortfolio.title}
-                  </h3>
+                  <CardTitle>{activePortfolio.title}</CardTitle>
                 </div>
-                
-                <button
+
+                <Button
+                  size="xs"
+                  variant={activePortfolio.is_public === 1 ? 'outline' : 'default'}
                   onClick={handleStatusToggle}
-                  className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all active:scale-95 ${
-                    activePortfolio.is_public === 1
-                      ? 'bg-stone-100 text-stone-700 border border-stone-200 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600'
-                      : 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-600'
-                  }`}
                 >
+                  <Radio className="size-3" />
                   {activePortfolio.is_public === 1 ? 'Make Private' : 'Make Public'}
-                </button>
-              </div>
+                </Button>
+              </CardHeader>
 
-              <p className="text-xs text-stone-500 dark:text-zinc-400 line-clamp-2">
-                {activePortfolio.description || 'No description for this portfolio.'}
-              </p>
+              <CardContent className="space-y-4">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  {activePortfolio.description || 'No description provided for this portfolio.'}
+                </p>
 
-              <div className="pt-2.5 border-t border-stone-100 dark:border-zinc-700/60 flex items-center justify-between">
-                <label className="text-[10px] font-bold text-stone-400 dark:text-zinc-500 uppercase tracking-wider" htmlFor="active-portfolio-select">
-                  Active Public Portfolio
-                </label>
-                <select
-                  id="active-portfolio-select"
-                  value={activePortfolio.id}
-                  onChange={(e) => {
-                    setActivePortfolio(e.target.value);
-                    showToast('Active portfolio updated');
-                  }}
-                  className="input-field text-xs py-1 px-3 w-auto max-w-[200px]"
-                >
-                  {userPortfolios.map(p => (
-                    <option key={p.id} value={p.id} className="bg-white dark:bg-zinc-900">
-                      {p.title} {p.is_public === 1 ? '• Public' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : (
-            <div className="glass-card p-6 text-center flex flex-col items-center gap-3">
-              <svg className="w-10 h-10 text-stone-300 dark:text-zinc-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4m16 0h-3.86a2 2 0 01-1.896 1.333H7.757a2 2 0 01-1.896-1.333H2" />
-              </svg>
-              <h3 className="font-semibold text-stone-900 dark:text-zinc-100">No portfolios created</h3>
-              <p className="text-xs text-stone-500">Setup your first portfolio page to display on your public profile.</p>
-              <Link
-                href="/portfolios"
-                className="mt-2 px-4 py-2 bg-stone-950 text-white rounded-full text-xs font-semibold shadow"
-              >
-                Create Portfolio
-              </Link>
-            </div>
-          )}
+                {/* Recruiter Live Link Panel */}
+                <div className="rounded-xl border border-border/70 bg-muted/40 p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Globe className="size-3.5 text-primary" />
+                      Live Recruiter URL
+                    </span>
+                    <span className="badge badge-public text-[9px]">Live Active</span>
+                  </div>
 
-          {/* Recruiter Live Link Panel */}
-          {activePortfolio && (
-            <div className="glass-card p-4 bg-[var(--accent-light)] border-[var(--border)] flex flex-col gap-3 animate-fadeIn">
-              <div>
-                <h4 className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-widest">
-                  Live Recruiter URL
-                </h4>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-xs font-mono font-medium truncate text-stone-700 dark:text-zinc-300">
+                  <div className="font-mono text-xs text-foreground bg-background/80 px-3 py-2 rounded-lg border border-border/60 truncate select-all">
                     {getRecruiterUrl()}
-                  </span>
-                </div>
-              </div>
+                  </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={copyUrlToClipboard}
-                  className="py-2 rounded-xl bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-[11px] font-semibold text-stone-800 dark:text-zinc-200 transition-all hover:bg-stone-50 active:scale-95 flex items-center justify-center gap-1 shadow-sm"
-                >
-                  Copy
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="py-2 rounded-xl bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-800 text-[11px] font-semibold text-stone-800 dark:text-zinc-200 transition-all hover:bg-stone-50 active:scale-95 flex items-center justify-center gap-1 shadow-sm"
-                >
-                  Share
-                </button>
-                <a
-                  href={`/${currentUser.username}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="py-2 rounded-xl bg-[var(--accent)] text-white text-[11px] font-semibold text-center hover:bg-[var(--accent-hover)] transition-all active:scale-95 flex items-center justify-center gap-1 shadow-sm"
-                >
-                  Preview
-                </a>
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button size="sm" variant="outline" onClick={copyUrlToClipboard} className="flex-1">
+                      {copied ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+                      {copied ? 'Copied' : 'Copy link'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleShare} className="flex-1">
+                      <Share2 className="size-3.5" />
+                      Share
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => window.open(`/${currentUser.username}`, '_blank')}
+                      className="flex-1"
+                    >
+                      <ExternalLink className="size-3.5" />
+                      Preview
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
+                  <label htmlFor="active-portfolio-select" className="text-muted-foreground font-medium">
+                    Active public selection
+                  </label>
+                  <select
+                    id="active-portfolio-select"
+                    value={activePortfolio.id}
+                    onChange={(e) => {
+                      setActivePortfolio(e.target.value);
+                      showToast('Active portfolio updated');
+                    }}
+                    className="input-field text-xs py-1 px-2.5 w-auto max-w-[220px]"
+                  >
+                    {userPortfolios.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title} {p.is_public === 1 ? '· Public' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="p-8 text-center flex flex-col items-center gap-3">
+              <FolderKanban className="size-10 text-muted-foreground/60" />
+              <CardTitle>No portfolios created</CardTitle>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                Set up your first portfolio workspace to present on your live link.
+              </p>
+              <Button onClick={() => router.push('/portfolios')} size="sm">
+                Create Portfolio
+              </Button>
+            </Card>
           )}
 
-          {/* Recent Portfolios registry */}
-          <div className="flex flex-col gap-3">
+          {/* Recent Portfolios Section */}
+          <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h4 className="text-[10px] font-bold text-stone-400 dark:text-zinc-500 uppercase tracking-widest">
+              <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
                 Recent Portfolios
-              </h4>
+              </h2>
               <Link
                 href="/portfolios"
-                className="text-[10px] font-semibold text-[var(--accent)] uppercase tracking-wide hover:underline"
+                className="text-xs font-medium text-primary hover:underline"
               >
-                View All
+                View all ({userPortfolios.length})
               </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {recentPortfolios.map(p => (
-                <div key={p.id} className="glass-card p-4 flex flex-col justify-between gap-3">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h5 className="font-semibold text-sm text-stone-900 dark:text-zinc-100">{p.title}</h5>
-                        <span className="text-[9px] font-mono text-stone-400 block mt-0.5">
-                          Updated {formatDate(p.updated_at)}
-                        </span>
-                      </div>
-                      <span className={`badge ${p.is_public === 1 ? 'badge-public' : 'badge-private'}`}>
-                        {p.is_public === 1 ? 'Public' : 'Private'}
+              {recentPortfolios.map((p) => (
+                <Card
+                  key={p.id}
+                  className="ui-stagger-item shadow-none transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md"
+                >
+                  <CardHeader className="flex flex-row items-start justify-between pb-2">
+                    <div>
+                      <CardTitle className="text-sm">{p.title}</CardTitle>
+                      <span className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
+                        Updated {formatDate(p.updated_at)}
                       </span>
                     </div>
-                    
-                    <p className="text-xs text-stone-500 dark:text-zinc-400 line-clamp-2">
+                    <span className={`badge ${p.is_public === 1 ? 'badge-public' : 'badge-private'} text-[9px]`}>
+                      {p.is_public === 1 ? 'Public' : 'Private'}
+                    </span>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                       {p.description || 'No description provided.'}
                     </p>
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-100 dark:border-zinc-700/60">
-                    <button
-                      onClick={() => router.push(`/portfolios/${p.id}/edit`)}
-                      className="py-1.5 text-center text-[10px] font-bold rounded-lg border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900 text-stone-700 dark:text-zinc-300 hover:bg-stone-100 transition-all active:scale-95"
-                    >
-                      Edit Projects
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActivePortfolio(p.id);
-                        router.push(`/${currentUser.username}`);
-                      }}
-                      className="py-1.5 text-center text-[10px] font-bold rounded-lg bg-[var(--accent)] text-white transition-all active:scale-95"
-                    >
-                      View Public
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      className="py-1.5 text-center text-[10px] font-bold rounded-lg border border-red-200 dark:border-red-950 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all active:scale-95"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-3 gap-1.5 pt-3 border-t border-border">
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => router.push(`/portfolios/${p.id}/edit`)}
+                        className="justify-center"
+                      >
+                        <Pencil className="size-3" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => {
+                          setActivePortfolio(p.id);
+                          router.push(`/${currentUser.username}`);
+                        }}
+                        className="justify-center text-primary hover:text-primary"
+                      >
+                        <Eye className="size-3" />
+                        View
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setDeletePortId(p.id)}
+                        className="justify-center text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-3" />
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right column (1/3 width on desktop): Quick Actions and Recruiter Inbox */}
-        <div className="flex flex-col gap-6 w-full">
+        {/* Right Column (1/3 width): Quick Actions & Recruiter Inbox */}
+        <div className="flex flex-col gap-6">
           {/* Quick Actions */}
-          <div>
-            <h4 className="text-[10px] font-bold text-stone-400 dark:text-zinc-500 uppercase tracking-widest mb-2.5">
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
               Quick Actions
-            </h4>
+            </h2>
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/portfolios"
-                className="p-4 glass-card flex flex-col gap-2 transition-all hover:translate-y-[-2px] hover:shadow-md active:translate-y-0 active:shadow-none"
+                className="group rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex flex-col gap-2"
               >
-                <i className="fas fa-folder-open text-[var(--accent)] text-xl shrink-0"></i>
+                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <FolderKanban className="size-4" />
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-[var(--text-primary)]">New Portfolio</div>
-                  <div className="text-[9px] text-[var(--text-muted)] mt-0.5">Create title & settings</div>
+                  <div className="text-xs font-semibold text-foreground">New Portfolio</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">Create title & settings</div>
                 </div>
               </Link>
+
               <Link
                 href="/profile"
-                className="p-4 glass-card flex flex-col gap-2 transition-all hover:translate-y-[-2px] hover:shadow-md active:translate-y-0 active:shadow-none"
+                className="group rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex flex-col gap-2"
               >
-                <i className="fas fa-user-cog text-[var(--accent)] text-xl shrink-0"></i>
+                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <UserCog className="size-4" />
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-[var(--text-primary)]">Edit Profile</div>
-                  <div className="text-[9px] text-[var(--text-muted)] mt-0.5">Bio, Skills & Education</div>
+                  <div className="text-xs font-semibold text-foreground">Edit Profile</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">Bio, Skills & Timeline</div>
                 </div>
               </Link>
             </div>
           </div>
 
-          {/* Recruiter Messages Inbox */}
-          <div className="flex flex-col gap-3">
-            <h4 className="text-[10px] font-bold text-stone-400 dark:text-zinc-500 uppercase tracking-widest">
-              Recruiter Inbox
-            </h4>
+          {/* Recruiter Inbox */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+                Recruiter Inbox
+              </h2>
+              <span className="text-xs text-muted-foreground font-mono">
+                {recruiterMessages.length} message{recruiterMessages.length === 1 ? '' : 's'}
+              </span>
+            </div>
+
             {recruiterMessages.length === 0 ? (
-              <div className="glass-card p-6 text-center text-[var(--text-muted)] text-xs flex flex-col items-center gap-2">
-                <svg className="w-6 h-6 text-stone-300 dark:text-zinc-655" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
+              <Card className="p-6 text-center text-muted-foreground text-xs flex flex-col items-center gap-2">
+                <Mail className="size-6 text-muted-foreground/40" />
                 No recruiter messages received yet.
-              </div>
+              </Card>
             ) : (
-              <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1">
-                {recruiterMessages.map(msg => (
-                  <div key={msg.id} className="glass-card p-4 flex flex-col gap-2 relative animate-fadeIn animate-duration-300">
+              <div className="flex flex-col gap-3 max-h-[520px] overflow-y-auto pr-1">
+                {recruiterMessages.map((msg) => (
+                  <Card key={msg.id} className="p-4 space-y-2.5 shadow-none hover:border-foreground/20">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h5 className="font-semibold text-xs text-stone-900 dark:text-zinc-100">
-                          {msg.name}
-                        </h5>
-                        <a href={`mailto:${msg.email}`} className="text-[10px] text-[var(--accent)] hover:underline">
+                        <h4 className="font-semibold text-xs text-foreground">{msg.name}</h4>
+                        <a
+                          href={`mailto:${msg.email}`}
+                          className="text-[11px] text-primary hover:underline"
+                        >
                           {msg.email}
                         </a>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[8px] font-mono text-stone-400 dark:text-zinc-500">
-                          {new Date(msg.created_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] font-mono text-muted-foreground">
+                          {new Date(msg.created_at).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
                         </span>
-                        <button
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
                           onClick={() => handleOpenDeleteModal(msg.id)}
-                          className="p-1 text-stone-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 transition-colors"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           title="Delete message"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                          <Trash2 className="size-3" />
+                        </Button>
                       </div>
                     </div>
-                    <p 
+
+                    <p
                       onClick={() => setActiveViewMessage(msg)}
-                      className="text-xs text-[var(--text-secondary)] bg-[var(--accent-light)] p-2.5 rounded-xl border border-[var(--border)] leading-relaxed font-sans cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent-light)]/80 transition-all select-none"
+                      className="text-xs text-muted-foreground bg-muted/40 p-2.5 rounded-xl border border-border/50 leading-relaxed cursor-pointer hover:border-border hover:bg-muted/70 transition-all select-none"
                       title="Click to view full message"
                     >
-                      {msg.message.length > 80 ? `${msg.message.substring(0, 80)}...` : msg.message}
-                      {msg.message.length > 80 && (
-                        <span className="text-[9px] text-[var(--accent)] font-semibold block mt-1">
-                          Click to view full message <i className="fas fa-external-link-alt text-[8px] ml-0.5"></i>
+                      {msg.message.length > 85 ? `${msg.message.substring(0, 85)}...` : msg.message}
+                      {msg.message.length > 85 && (
+                        <span className="text-[10px] text-primary font-semibold block mt-1">
+                          Click to view full message
                         </span>
                       )}
                     </p>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}
@@ -442,31 +471,26 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Message Deletion Modal Overlay */}
+      {/* Message Deletion Modal */}
       {deleteMsgId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="glass-card max-w-md w-full mx-4 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-              <div className="p-2 bg-red-500/10 dark:bg-red-500/20 rounded-xl shrink-0">
-                <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
+              <div className="p-2 rounded-xl bg-destructive/10">
+                <AlertTriangle className="size-5" />
               </div>
-              <h3 className="font-bold text-base tracking-tight text-stone-900 dark:text-white leading-tight">Delete Recruiter Message</h3>
+              <h3 className="font-semibold text-base text-foreground">Delete Recruiter Message</h3>
             </div>
-            
-            <p className="text-xs text-stone-500 dark:text-zinc-400 leading-relaxed">
-              This action is permanent and cannot be undone. To verify, please type the following confirmation phrase exactly:
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This action is permanent and cannot be undone. To verify, please type the confirmation phrase exactly:
             </p>
-            
-            <div 
-              draggable="false"
-              className="p-2.5 bg-stone-50 dark:bg-zinc-900/60 rounded-xl border border-stone-200/50 dark:border-zinc-700/40 text-center select-none pointer-events-none font-mono text-[10px] font-bold text-stone-700 dark:text-zinc-300"
-            >
+
+            <div className="p-2.5 bg-muted rounded-xl border border-border text-center select-none font-mono text-[11px] font-semibold text-foreground">
               I am deleting this with full awareness.
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="space-y-1.5">
               <input
                 type="text"
                 value={deleteConfirmText}
@@ -474,102 +498,111 @@ export default function DashboardPage() {
                   setDeleteConfirmText(e.target.value);
                   setDeleteError('');
                 }}
-                onPaste={(e) => e.preventDefault()}
                 className="input-field"
+                placeholder="Type confirmation phrase"
                 autoFocus
               />
-              {deleteError && (
-                <span className="text-[10px] font-semibold text-red-600 dark:text-red-400">
-                  {deleteError}
-                </span>
-              )}
+              {deleteError && <p className="text-xs text-destructive">{deleteError}</p>}
             </div>
 
-            <div className="flex gap-2.5 justify-end mt-2">
-              <button
-                onClick={() => setDeleteMsgId(null)}
-                className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all active:scale-95"
-              >
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" size="sm" onClick={() => setDeleteMsgId(null)}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={handleConfirmDeleteMessage}
                 disabled={deleteConfirmText !== 'I am deleting this with full awareness.'}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:pointer-events-none text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
               >
                 Confirm Delete
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Portfolio Deletion Modal Overlay */}
+      {/* Portfolio Deletion Modal */}
       {deletePortId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="glass-card max-w-sm w-full mx-4 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-              <div className="p-2 bg-red-500/10 dark:bg-red-500/20 rounded-xl shrink-0">
-                <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
+              <div className="p-2 rounded-xl bg-destructive/10">
+                <AlertTriangle className="size-5" />
               </div>
-              <h3 className="font-bold text-base tracking-tight text-stone-900 dark:text-white leading-tight">Delete Portfolio</h3>
+              <h3 className="font-semibold text-base text-foreground">Delete Portfolio</h3>
             </div>
-            
-            <p className="text-xs text-stone-500 dark:text-zinc-400 leading-relaxed">
-              Are you sure you want to delete this portfolio? This will remove all associated projects, work experiences, and academic achievements. This action cannot be undone.
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to delete this portfolio? This will remove all associated projects and achievements.
             </p>
 
-            <div className="flex gap-2.5 justify-end mt-2">
-              <button
-                onClick={() => setDeletePortId(null)}
-                className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all active:scale-95"
-              >
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" size="sm" onClick={() => setDeletePortId(null)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleConfirmDeletePort}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
-              >
-                Confirm Delete
-              </button>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleConfirmDeletePort}>
+                Delete
+              </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* View Message Modal Overlay */}
+      {/* View Message Modal */}
       {activeViewMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="glass-card max-w-lg w-full mx-4 p-6 flex flex-col gap-4 bg-white dark:bg-zinc-800">
-            <div className="flex justify-between items-start border-b border-stone-100 dark:border-zinc-700/60 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-start border-b border-border pb-3">
               <div>
-                <h3 className="font-bold text-sm text-stone-900 dark:text-zinc-100">
+                <h3 className="font-semibold text-sm text-foreground">
                   Message from {activeViewMessage.name}
                 </h3>
-                <a href={`mailto:${activeViewMessage.email}`} className="text-xs text-[var(--accent)] hover:underline font-medium mt-0.5 block">
+                <a
+                  href={`mailto:${activeViewMessage.email}`}
+                  className="text-xs text-primary hover:underline font-medium mt-0.5 block"
+                >
                   {activeViewMessage.email}
                 </a>
               </div>
-              <span className="text-[10px] font-mono text-stone-400 dark:text-zinc-500">
-                {new Date(activeViewMessage.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {new Date(activeViewMessage.created_at).toLocaleString(undefined, {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
               </span>
             </div>
-            
-            <p className="text-xs text-stone-600 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-[300px] overflow-y-auto bg-stone-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-stone-200/30 dark:border-zinc-800/50 select-text">
+
+            <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap max-h-[300px] overflow-y-auto bg-muted/40 p-4 rounded-xl border border-border select-text">
               {activeViewMessage.message}
             </p>
 
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => setActiveViewMessage(null)}
-                className="px-5 py-2 rounded-full font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600 text-xs transition-all active:scale-95 border border-stone-200/40 dark:border-zinc-600"
-              >
+            <div className="flex justify-end pt-2">
+              <Button variant="outline" size="sm" onClick={() => setActiveViewMessage(null)}>
                 Close
-              </button>
+              </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Bottom Snack Toast Notification */}
+      {toast && (
+        <div
+          className="fixed right-4 bottom-4 left-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-border bg-popover p-3 pl-4 text-popover-foreground shadow-xl sm:left-auto sm:mx-0 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="min-w-0 flex-1 truncate text-xs font-medium">{toast}</p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => showToast('')}
+            aria-label="Dismiss"
+          >
+            <X className="size-3.5" />
+          </Button>
         </div>
       )}
     </div>

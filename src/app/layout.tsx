@@ -1,14 +1,26 @@
 import type { Metadata } from 'next';
-import { Fraunces, Geist } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { PortfolioProvider } from '@/components/providers/portfolio-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import { LayoutShell } from '@/components/ui/LayoutShell';
+import { cn } from '@/lib/utils';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
-const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-display' });
+const fontSans = Geist({
+  subsets: ['latin'],
+  variable: '--font-sans',
+});
+
+const fontMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+});
 
 export const metadata: Metadata = {
-  title: 'PortfolioHub',
+  title: {
+    default: 'PortfolioHub',
+    template: '%s | PortfolioHub',
+  },
   description: 'Create and share your professional portfolio',
   openGraph: {
     title: 'PortfolioHub',
@@ -22,33 +34,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var savedTheme = localStorage.getItem('theme');
-                  if (savedTheme) {
-                    document.documentElement.setAttribute('data-theme', savedTheme);
-                  } else {
-                    var preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    document.documentElement.setAttribute('data-theme', preferDark ? 'dark' : 'light');
-                  }
-                } catch (e) {}
-              })();
-            `
-          }}
-        />
-      </head>
-      <body className={`${geist.variable} ${fraunces.variable} antialiased`}>
-        <PortfolioProvider>
-          <LayoutShell>
-            {children}
-          </LayoutShell>
-        </PortfolioProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn('antialiased', fontSans.variable, fontMono.variable)}
+    >
+      <body suppressHydrationWarning className="min-h-screen bg-background text-foreground font-sans">
+        <ThemeProvider>
+          <PortfolioProvider>
+            <LayoutShell>{children}</LayoutShell>
+          </PortfolioProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
-}
+}

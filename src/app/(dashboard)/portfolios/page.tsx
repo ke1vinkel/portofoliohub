@@ -2,8 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus, X, Pencil, Eye, Trash2, FolderKanban, AlertTriangle } from 'lucide-react';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
 import { formatDate } from '@/lib/utils';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { Label } from '@/components/ui/Label';
 
 export default function PortfoliosPage() {
   const {
@@ -15,8 +21,7 @@ export default function PortfoliosPage() {
   } = usePortfolio();
 
   const router = useRouter();
-  
-  // Local state for inline creation form
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -32,7 +37,9 @@ export default function PortfoliosPage() {
 
   if (!currentUser) return null;
 
-  const userPortfolios = db.portfolios.filter(p => (p.user_id || (p as any).user) === currentUser.id);
+  const userPortfolios = db.portfolios.filter(
+    (p) => (p.user_id || (p as any).user) === currentUser.id
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +53,7 @@ export default function PortfoliosPage() {
     try {
       const newId = await addPortfolio(title.trim(), description.trim(), isPublic);
       if (newId) {
-        showToast('Portfolio created! 📁');
-        // Reset Form
+        showToast('Portfolio created');
         setTitle('');
         setDescription('');
         setIsPublic(false);
@@ -60,206 +66,224 @@ export default function PortfoliosPage() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    setDeletePortId(id);
-  };
-
   const handleConfirmDeletePort = async () => {
     if (deletePortId) {
       await deletePortfolio(deletePortId);
-      showToast('Portfolio deleted 🗑️');
+      showToast('Portfolio deleted');
     }
     setDeletePortId(null);
   };
 
   return (
-    <div className="flex-grow flex flex-col gap-5 pb-8 max-w-5xl xl:max-w-7xl 2xl:max-w-[1800px] mx-auto w-full relative">
-      
-      {/* Toast Notification Banner */}
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-[var(--accent)] text-white rounded-full shadow-lg text-xs font-semibold tracking-wide animate-bounce">
-          {toast}
-        </div>
-      )}
-
-      {/* Page Header */}
-      <div className="flex justify-between items-center">
+    <div className="flex-1 flex flex-col gap-6 w-full max-w-7xl mx-auto">
+      {/* Header section matching cv-gen */}
+      <div className="flex flex-row items-center justify-between gap-4 border-b border-border/80 pb-6">
         <div>
-          <h2 className="text-2xl font-bold font-display text-stone-950 dark:text-white tracking-tight">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             My Portfolios
-          </h2>
-          <p className="text-xs text-stone-400 dark:text-zinc-500 font-mono mt-0.5">
-            Manage your collections of work ({userPortfolios.length})
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Manage your collections of projects and experiences ({userPortfolios.length})
           </p>
         </div>
-        
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="w-10 h-10 rounded-full bg-[var(--accent)] text-white flex items-center justify-center font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-md"
-          aria-label={showAddForm ? 'Close create form' : 'Create new portfolio'}
-        >
-          {showAddForm ? '×' : '+'}
-        </button>
+
+        <div className="flex items-center gap-3">
+          <Button
+            size={showAddForm ? 'icon-sm' : 'icon-lg'}
+            onClick={() => setShowAddForm(!showAddForm)}
+            variant={showAddForm ? 'outline' : 'default'}
+            aria-label={showAddForm ? 'Close create form' : 'Create a new portfolio'}
+            title={showAddForm ? 'Close' : 'Create new portfolio'}
+          >
+            {showAddForm ? <X className="size-4" /> : <Plus className="size-5" />}
+          </Button>
+        </div>
       </div>
 
       {/* Expandable Inline Create Form Card */}
       {showAddForm && (
-        <div className="glass-card p-4 bg-[var(--accent-light)] border-[var(--border)] animate-fadeIn">
-          <h3 className="font-semibold text-sm text-stone-950 dark:text-white mb-4">
-            Create Portfolio
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-            {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs rounded-xl font-medium">
-                {error}
-              </div>
-            )}
+        <Card className="animate-in fade-in slide-in-from-top-2 duration-200 border-primary/20 bg-muted/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Create Portfolio</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+              {error && (
+                <div className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive">
+                  {error}
+                </div>
+              )}
 
-            <div className="input-group flex flex-col">
-              <label className="input-label" htmlFor="portfolio-title-input">Title</label>
-              <input
-                id="portfolio-title-input"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="input-field"
-              />
-            </div>
-
-            <div className="input-group flex flex-col">
-              <label className="input-label" htmlFor="portfolio-desc-input">Description</label>
-              <textarea
-                id="portfolio-desc-input"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="input-field"
-                rows={3}
-              />
-            </div>
-
-            <div className="input-group">
-              <label className="checkbox" htmlFor="portfolio-public-checkbox">
-                <input
-                  id="portfolio-public-checkbox"
-                  type="checkbox"
-                  checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
+              <div className="space-y-1.5">
+                <Label htmlFor="portfolio-title-input">Title</Label>
+                <Input
+                  id="portfolio-title-input"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Software Engineering & Full-stack"
+                  required
                 />
-                <span>Set as active public portfolio</span>
-              </label>
-            </div>
+              </div>
 
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="flex-1 py-3 rounded-full font-semibold text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow text-xs transition-all"
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="flex-1 py-3 rounded-full font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-200/60 dark:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-600 text-xs transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="portfolio-desc-input">Description</Label>
+                <Textarea
+                  id="portfolio-desc-input"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief summary of what this portfolio covers"
+                  rows={3}
+                />
+              </div>
+
+              <div className="pt-1">
+                <label className="checkbox" htmlFor="portfolio-public-checkbox">
+                  <input
+                    id="portfolio-public-checkbox"
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                  />
+                  <span className="text-xs">Set as active public live portfolio</span>
+                </label>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm">
+                  Create Portfolio
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Portfolios registry */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {userPortfolios.length === 0 ? (
-          <div className="glass-card p-8 text-center flex flex-col items-center gap-3 md:col-span-2 lg:col-span-3">
-            <svg className="w-10 h-10 text-stone-300 dark:text-zinc-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4m16 0h-3.86a2 2 0 01-1.896 1.333H7.757a2 2 0 01-1.896-1.333H2" />
-            </svg>
-            <h3 className="font-semibold text-stone-900 dark:text-zinc-100">No portfolios yet</h3>
-            <p className="text-xs text-stone-400">Click the "+" icon above to set up your first workspace portfolio.</p>
+      {/* Portfolios Grid */}
+      {userPortfolios.length === 0 ? (
+        <section className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-border px-6 text-center">
+          <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-muted">
+            <FolderKanban className="size-5 text-muted-foreground" />
           </div>
-        ) : (
-          userPortfolios.map(p => (
-            <div key={p.id} className="glass-card p-4 flex flex-col justify-between gap-3">
-              <div className="flex justify-between items-start">
+          <h2 className="text-lg font-semibold text-foreground">Your portfolio list is empty</h2>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground leading-relaxed">
+            Use the plus button above to create your first portfolio collection. You can keep separate versions tailored for different domains.
+          </p>
+        </section>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {userPortfolios.map((p) => (
+            <Card
+              key={p.id}
+              className="ui-stagger-item shadow-none transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md"
+            >
+              <CardHeader className="flex flex-row items-start justify-between pb-2">
                 <div>
-                  <h4 className="font-semibold text-sm text-stone-900 dark:text-zinc-100">{p.title}</h4>
-                  <span className="text-[9px] font-mono text-stone-400 block mt-0.5">
+                  <CardTitle className="text-sm">{p.title}</CardTitle>
+                  <span className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
                     Created {formatDate(p.created_at)}
                   </span>
                 </div>
-                <span className={`badge ${p.is_public === 1 ? 'badge-public' : 'badge-private'}`}>
+                <span className={`badge ${p.is_public === 1 ? 'badge-public' : 'badge-private'} text-[9px]`}>
                   {p.is_public === 1 ? 'Public' : 'Private'}
                 </span>
-              </div>
-              
-              <p className="text-xs text-stone-500 dark:text-zinc-400 line-clamp-2">
-                {p.description || 'No description provided.'}
-              </p>
+              </CardHeader>
 
+              <CardContent className="space-y-4">
+                <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                  {p.description || 'No description provided.'}
+                </p>
 
+                <div className="grid grid-cols-3 gap-1.5 pt-3 border-t border-border">
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => router.push(`/portfolios/${p.id}/edit`)}
+                    className="justify-center"
+                  >
+                    <Pencil className="size-3" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => {
+                      setActivePortfolio(p.id);
+                      router.push(`/${currentUser.username}`);
+                    }}
+                    className="justify-center text-primary hover:text-primary"
+                  >
+                    <Eye className="size-3" />
+                    View
+                  </Button>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => setDeletePortId(p.id)}
+                    className="justify-center text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="size-3" />
+                    Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-              <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-zinc-700/60">
-                <button
-                  onClick={() => router.push(`/portfolios/${p.id}/edit`)}
-                  className="py-1.5 text-center text-[10px] font-bold rounded-lg border border-stone-200 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900 text-stone-700 dark:text-zinc-300 hover:bg-stone-100 transition-all active:scale-95 shadow-sm"
-                >
-                  Edit Projects
-                </button>
-                <button
-                  onClick={() => {
-                    setActivePortfolio(p.id);
-                    router.push(`/${currentUser.username}`);
-                  }}
-                  className="py-1.5 text-center text-[10px] font-bold rounded-lg bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-all active:scale-95 shadow-sm"
-                >
-                  View Public
-                </button>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="py-1.5 text-center text-[10px] font-bold rounded-lg border border-red-200 dark:border-red-950 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all active:scale-95 shadow-sm"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Portfolio Deletion Modal Overlay */}
+      {/* Delete Confirmation Modal */}
       {deletePortId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="glass-card max-w-sm w-full mx-4 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-              <div className="p-2 bg-red-500/10 dark:bg-red-500/20 rounded-xl shrink-0">
-                <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-destructive">
+              <div className="p-2 rounded-xl bg-destructive/10">
+                <AlertTriangle className="size-5" />
               </div>
-              <h3 className="font-bold text-base tracking-tight text-stone-900 dark:text-white leading-tight">Delete Portfolio</h3>
+              <h3 className="font-semibold text-base text-foreground">Delete Portfolio</h3>
             </div>
-            
-            <p className="text-xs text-stone-500 dark:text-zinc-400 leading-relaxed">
-              Are you sure you want to delete this portfolio? This will remove all associated projects, work experiences, and academic achievements. This action cannot be undone.
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to delete this portfolio? This will remove all associated projects and achievements. This action cannot be undone.
             </p>
 
-            <div className="flex gap-2.5 justify-end mt-2">
-              <button
-                onClick={() => setDeletePortId(null)}
-                className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all active:scale-95"
-              >
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" size="sm" onClick={() => setDeletePortId(null)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleConfirmDeletePort}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
-              >
-                Confirm Delete
-              </button>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleConfirmDeletePort}>
+                Delete
+              </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className="fixed right-4 bottom-4 left-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-border bg-popover p-3 pl-4 text-popover-foreground shadow-xl sm:left-auto sm:mx-0 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="min-w-0 flex-1 truncate text-xs font-medium">{toast}</p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setToast('')}
+            aria-label="Dismiss"
+          >
+            <X className="size-3.5" />
+          </Button>
         </div>
       )}
     </div>
