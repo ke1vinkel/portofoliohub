@@ -21,7 +21,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { usePortfolio } from '@/components/providers/portfolio-provider';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatExternalUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -101,8 +101,8 @@ export default function DashboardPage() {
     if (!mounted || typeof window === 'undefined') return '';
     const origin = window.location.origin;
     const profile = db.profiles[currentUser.id];
-    if (profile?.custom_domain) {
-      return `https://${profile.custom_domain}`;
+    if (profile?.custom_domain && profile.custom_domain.trim()) {
+      return formatExternalUrl(profile.custom_domain);
     }
     return `${origin}/${currentUser.username}`;
   };
