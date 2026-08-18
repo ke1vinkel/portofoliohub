@@ -13,16 +13,8 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Environment variables needed during build
-ARG DATABASE_URL
-ARG DATABASE_AUTH_TOKEN
-ARG APP_DATABASE_URL
-ARG APP_DATABASE_TOKEN
-ARG AUTH_DATABASE_URL
-ARG AUTH_DATABASE_TOKEN
-ARG NEXTAUTH_SECRET
-ARG NEXTAUTH_URL
-ARG ALLOWED_FRAME_ANCESTORS
+# Ensure public directory exists
+RUN mkdir -p /app/public
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
