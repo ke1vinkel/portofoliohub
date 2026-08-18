@@ -32,6 +32,7 @@ export default function PortfolioEditPage() {
 
   const {
     db,
+    currentUser,
     updatePortfolio,
     addProject,
     updateProject,
@@ -497,178 +498,336 @@ export default function PortfolioEditPage() {
               </label>
             </div>
 
-            {/* Appearance & Theme Styling Controls */}
+            {/* Appearance & Theme Styling Controls with Live Preview */}
             <div className="border-t border-border pt-4 space-y-4">
-              <div className="flex items-center gap-2">
-                <Palette className="size-4 text-primary" />
-                <h3 className="text-sm font-semibold text-foreground">Theme & Visual Styling</h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Palette className="size-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Theme & Visual Styling</h3>
+                </div>
+                <span className="text-[11px] font-mono text-muted-foreground uppercase flex items-center gap-1">
+                  <Sparkles className="size-3 text-primary" />
+                  {themePreset} preset
+                </span>
               </div>
 
-              {/* 1-Click Preset Shortcuts */}
-              <div className="space-y-2">
-                <Label>1-Click Aesthetic Presets</Label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { key: 'obsidian', label: 'Obsidian Dark', bg: '#0d0d11', accent: '#10b981' },
-                    { key: 'editorial', label: 'Warm Editorial', bg: '#faf8f5', accent: '#d97706' },
-                    { key: 'neon', label: 'Cyber Neon', bg: '#05070f', accent: '#06b6d4' },
-                    { key: 'monochrome', label: 'Monochrome', bg: '#18181b', accent: '#e4e4e7' },
-                    { key: 'pastel', label: 'Studio Pastel', bg: '#fdf4ff', accent: '#a855f7' },
-                  ].map((p) => (
-                    <button
-                      key={p.key}
-                      type="button"
-                      onClick={() => applyPreset(p.key)}
-                      className={cn(
-                        'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 border transition-all',
-                        themePreset === p.key
-                          ? 'border-primary bg-primary/10 text-primary shadow-xs font-medium'
-                          : 'border-border bg-muted/40 text-muted-foreground hover:text-foreground'
-                      )}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Left side: Controls (7 cols on lg) */}
+                <div className="lg:col-span-7 space-y-4">
+                  {/* 1-Click Preset Shortcuts */}
+                  <div className="space-y-2">
+                    <Label>1-Click Aesthetic Presets</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { key: 'obsidian', label: 'Obsidian Dark', bg: '#0d0d11', accent: '#10b981' },
+                        { key: 'editorial', label: 'Warm Editorial', bg: '#faf8f5', accent: '#d97706' },
+                        { key: 'neon', label: 'Cyber Neon', bg: '#05070f', accent: '#06b6d4' },
+                        { key: 'monochrome', label: 'Monochrome', bg: '#18181b', accent: '#e4e4e7' },
+                        { key: 'pastel', label: 'Studio Pastel', bg: '#fdf4ff', accent: '#a855f7' },
+                      ].map((p) => (
+                        <button
+                          key={p.key}
+                          type="button"
+                          onClick={() => applyPreset(p.key)}
+                          className={cn(
+                            'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 border transition-all cursor-pointer active:scale-95',
+                            themePreset === p.key
+                              ? 'border-primary bg-primary/10 text-primary shadow-xs font-medium'
+                              : 'border-border bg-muted/40 text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          <span
+                            className="size-2.5 rounded-full border border-black/20"
+                            style={{ backgroundColor: p.accent }}
+                          />
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Color Pickers */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/40 p-3.5 rounded-xl border border-border">
+                    <div className="space-y-1">
+                      <Label>Background</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={bgColor}
+                          onChange={(e) => {
+                            setBgColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={bgColor}
+                          onChange={(e) => {
+                            setBgColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="input-field py-1 text-xs font-mono w-20 h-7"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label>Surface</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={surfaceColor}
+                          onChange={(e) => {
+                            setSurfaceColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={surfaceColor}
+                          onChange={(e) => {
+                            setSurfaceColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="input-field py-1 text-xs font-mono w-20 h-7"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label>Text</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={textColor}
+                          onChange={(e) => {
+                            setTextColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={textColor}
+                          onChange={(e) => {
+                            setTextColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="input-field py-1 text-xs font-mono w-20 h-7"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label>Accent</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={accentColor}
+                          onChange={(e) => {
+                            setAccentColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={accentColor}
+                          onChange={(e) => {
+                            setAccentColor(e.target.value);
+                            setThemePreset('custom');
+                          }}
+                          className="input-field py-1 text-xs font-mono w-20 h-7"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Typography & Card Style Dropdowns */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label>Typography Style</Label>
+                      <select
+                        value={fontStyle}
+                        onChange={(e) => {
+                          setFontStyle(e.target.value as any);
+                          setThemePreset('custom');
+                        }}
+                        className="input-field py-1.5 text-xs"
+                      >
+                        <option value="sans">Modern Sans-Serif (Geist / Outfit)</option>
+                        <option value="serif">Elegant Serif (Editorial)</option>
+                        <option value="mono">Minimal Technical Mono</option>
+                        <option value="display">Bold Geometric Display</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Card Layout Style</Label>
+                      <select
+                        value={cardStyle}
+                        onChange={(e) => {
+                          setCardStyle(e.target.value as any);
+                          setThemePreset('custom');
+                        }}
+                        className="input-field py-1.5 text-xs"
+                      >
+                        <option value="spotlight">Spotlight Refraction Glow</option>
+                        <option value="minimal">Minimal Hairline Border</option>
+                        <option value="glass">Translucent Glassmorphism</option>
+                        <option value="bento">Bold Editorial Bento</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side: Interactive Live Theme Preview Canvas (5 cols on lg) */}
+                <div className="lg:col-span-5 space-y-2">
+                  <Label className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Sparkles className="size-3.5 text-primary" />
+                      Live Recruiter Canvas Preview
+                    </span>
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                      {fontStyle} · {cardStyle}
+                    </span>
+                  </Label>
+
+                  {/* Real-time Theme Simulator Box */}
+                  <div
+                    className={cn(
+                      'rounded-2xl p-4 transition-all duration-300 border shadow-lg space-y-3 overflow-hidden relative',
+                      fontStyle === 'serif' && 'font-serif',
+                      fontStyle === 'mono' && 'font-mono',
+                      fontStyle === 'display' && 'font-sans tracking-tight',
+                      fontStyle === 'sans' && 'font-sans'
+                    )}
+                    style={{
+                      backgroundColor: bgColor,
+                      color: textColor,
+                      borderColor: `${accentColor}33`,
+                    }}
+                  >
+                    {/* Mini Window Topbar */}
+                    <div
+                      className="flex items-center justify-between pb-2 border-b"
+                      style={{ borderColor: `${textColor}1a` }}
                     >
+                      <div className="flex items-center gap-1.5">
+                        <span className="size-2 rounded-full" style={{ backgroundColor: `${accentColor}99` }} />
+                        <span className="text-[11px] font-bold tracking-tight" style={{ color: textColor }}>
+                          Preview<span style={{ color: `${textColor}80`, fontWeight: 400 }}> · portfolio</span>
+                        </span>
+                      </div>
                       <span
-                        className="size-2.5 rounded-full border border-black/20"
-                        style={{ backgroundColor: p.accent }}
-                      />
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                        className="text-[9px] font-semibold px-2 py-0.5 rounded-full border"
+                        style={{
+                          borderColor: `${accentColor}40`,
+                          backgroundColor: `${accentColor}18`,
+                          color: accentColor,
+                        }}
+                      >
+                        ● Active Live
+                      </span>
+                    </div>
 
-              {/* Custom Color Pickers */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/40 p-3.5 rounded-xl border border-border">
-                <div className="space-y-1">
-                  <Label>Background</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={bgColor}
-                      onChange={(e) => {
-                        setBgColor(e.target.value);
-                        setThemePreset('custom');
+                    {/* Mini Headline */}
+                    <div className="space-y-0.5">
+                      <h4 className="text-sm font-bold leading-tight" style={{ color: textColor }}>
+                        Hi, I&apos;m {currentUser?.name || 'Kelvin'}
+                      </h4>
+                      <div className="text-xs font-bold leading-tight" style={{ color: accentColor }}>
+                        Software Developer
+                      </div>
+                    </div>
+
+                    {/* Sample Project Card styled dynamically */}
+                    <div
+                      className={cn(
+                        'p-3 rounded-xl transition-all space-y-2 border',
+                        cardStyle === 'spotlight' && 'shadow-md',
+                        cardStyle === 'minimal' && 'border-dashed shadow-none',
+                        cardStyle === 'glass' && 'backdrop-blur-md shadow-lg',
+                        cardStyle === 'bento' && 'border-2 shadow-sm font-medium'
+                      )}
+                      style={{
+                        backgroundColor: surfaceColor,
+                        borderColor: `${accentColor}40`,
+                        color: textColor,
                       }}
-                      className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={bgColor}
-                      onChange={(e) => {
-                        setBgColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="input-field py-1 text-xs font-mono w-20 h-7"
-                    />
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: accentColor }}>
+                          Featured Project
+                        </span>
+                        <span className="text-[8px] font-mono" style={{ color: `${textColor}70` }}>
+                          ★ Featured
+                        </span>
+                      </div>
+
+                      <div className="space-y-0.5">
+                        <h5 className="text-xs font-semibold" style={{ color: textColor }}>
+                          Project 1 · Analytics Dashboard
+                        </h5>
+                        <p className="text-[9px] leading-relaxed line-clamp-1" style={{ color: `${textColor}99` }}>
+                          Modern telemetry platform with real-time analytics.
+                        </p>
+                      </div>
+
+                      <div
+                        className="flex items-center justify-between pt-1.5 border-t text-[9px]"
+                        style={{ borderColor: `${textColor}15` }}
+                      >
+                        <div className="flex gap-1">
+                          <span
+                            className="text-[8px] font-mono px-1.5 py-0.2 rounded border"
+                            style={{
+                              backgroundColor: `${bgColor}80`,
+                              borderColor: `${accentColor}30`,
+                              color: textColor,
+                            }}
+                          >
+                            React
+                          </span>
+                          <span
+                            className="text-[8px] font-mono px-1.5 py-0.2 rounded border"
+                            style={{
+                              backgroundColor: `${bgColor}80`,
+                              borderColor: `${accentColor}30`,
+                              color: textColor,
+                            }}
+                          >
+                            Next.js
+                          </span>
+                        </div>
+
+                        <span className="font-semibold flex items-center gap-0.5" style={{ color: accentColor }}>
+                          View on GitHub →
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Color Swatch Footer */}
+                    <div
+                      className="flex items-center justify-between pt-2 border-t text-[8px] font-mono"
+                      style={{ borderColor: `${textColor}15`, color: `${textColor}80` }}
+                    >
+                      <span className="flex items-center gap-1">
+                        <span className="size-2 rounded-full" style={{ backgroundColor: bgColor }} />
+                        {bgColor}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="size-2 rounded-full" style={{ backgroundColor: surfaceColor }} />
+                        {surfaceColor}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="size-2 rounded-full" style={{ backgroundColor: accentColor }} />
+                        {accentColor}
+                      </span>
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label>Surface</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={surfaceColor}
-                      onChange={(e) => {
-                        setSurfaceColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={surfaceColor}
-                      onChange={(e) => {
-                        setSurfaceColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="input-field py-1 text-xs font-mono w-20 h-7"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label>Text</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={textColor}
-                      onChange={(e) => {
-                        setTextColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={textColor}
-                      onChange={(e) => {
-                        setTextColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="input-field py-1 text-xs font-mono w-20 h-7"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label>Accent</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={accentColor}
-                      onChange={(e) => {
-                        setAccentColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="size-7 rounded border-0 cursor-pointer p-0 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={accentColor}
-                      onChange={(e) => {
-                        setAccentColor(e.target.value);
-                        setThemePreset('custom');
-                      }}
-                      className="input-field py-1 text-xs font-mono w-20 h-7"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Typography & Card Style Dropdowns */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Typography Style</Label>
-                  <select
-                    value={fontStyle}
-                    onChange={(e) => {
-                      setFontStyle(e.target.value as any);
-                      setThemePreset('custom');
-                    }}
-                    className="input-field py-1.5 text-xs"
-                  >
-                    <option value="sans">Modern Sans-Serif (Geist / Outfit)</option>
-                    <option value="serif">Elegant Serif (Editorial)</option>
-                    <option value="mono">Minimal Technical Mono</option>
-                    <option value="display">Bold Geometric Display</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label>Card Layout Style</Label>
-                  <select
-                    value={cardStyle}
-                    onChange={(e) => {
-                      setCardStyle(e.target.value as any);
-                      setThemePreset('custom');
-                    }}
-                    className="input-field py-1.5 text-xs"
-                  >
-                    <option value="spotlight">Spotlight Refraction Glow</option>
-                    <option value="minimal">Minimal Hairline Border</option>
-                    <option value="glass">Translucent Glassmorphism</option>
-                    <option value="bento">Bold Editorial Bento</option>
-                  </select>
                 </div>
               </div>
             </div>
