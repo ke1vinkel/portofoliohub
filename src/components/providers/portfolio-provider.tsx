@@ -119,13 +119,11 @@ const PortfolioContextAggregator: React.FC<{ children: React.ReactNode }> = ({ c
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <DatabaseProvider>
-          <PortfolioContextAggregator>{children}</PortfolioContextAggregator>
-        </DatabaseProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <DatabaseProvider>
+        <PortfolioContextAggregator>{children}</PortfolioContextAggregator>
+      </DatabaseProvider>
+    </AuthProvider>
   );
 };
 
