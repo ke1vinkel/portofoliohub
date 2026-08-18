@@ -1539,7 +1539,7 @@ export default function RecruiterViewPage() {
                   src={normalizeEmbedUrl(selectedProject.embed_url)}
                   title={selectedProject.title}
                   className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; modals"
                   allowFullScreen
                 />
               </div>
