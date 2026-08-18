@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npx rimraf .next && next dev -p 3000 -H 0.0.0.0",
+    "dev": "npx rimraf .next && next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -18,17 +18,29 @@ export async function GET() {
       console.error('Profile auto-provision error (non-fatal):', provErr);
     }
 
-    // 1. Users from Central Auth DB via direct HTTP fetch
-    const userRows = await queryAuthDb('SELECT id, email, nim, name, role_id FROM users');
+    // 1. Users from Central Auth DB via direct HTTP fetch (joining user_roles & roles)
+    const userRows = await queryAuthDb(`
+      SELECT 
+        users.id, 
+        users.email, 
+        users.nim, 
+        users.name, 
+        roles.name AS role_name
+      FROM users
+      LEFT JOIN user_roles ON user_roles.user_id = users.id
+      LEFT JOIN roles ON roles.id = user_roles.role_id
+      GROUP BY users.id
+      ORDER BY users.name ASC
+    `);
     const users = userRows.map((row: any) => {
       const email = String(row.email || '');
       const name = String(row.name || '');
       const nameSlug = name.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
       const emailSlug = email.split('@')[0] || 'user';
-      const roleIdStr = String(row.role_id || '').toLowerCase().trim();
+      const roleNameStr = String(row.role_name || row.role_id || '').toLowerCase().trim();
       const nimStr = String(row.nim || '').trim().toUpperCase();
       const isLecturerNim = /^D\d+/i.test(nimStr);
-      const role: 'student' | 'lecturer' = (roleIdStr === '3' || roleIdStr === 'lecturer' || roleIdStr === 'dosen' || isLecturerNim) ? 'lecturer' : 'student';
+      const role: 'student' | 'lecturer' = (roleNameStr === 'lecturer' || roleNameStr === 'dosen' || roleNameStr === '3' || isLecturerNim) ? 'lecturer' : 'student';
       return {
         id: String(row.id),
         email,

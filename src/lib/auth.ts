@@ -23,10 +23,21 @@ export const authOptions: NextAuthOptions = {
 
           let userRow: any = null;
 
-          // Central Auth lookup via direct HTTP fetch (avoids @libsql/client migration job check)
+          // Central Auth lookup via direct HTTP fetch (joins user_roles and roles table)
           try {
             const rows = await queryAuthDb(
-              'SELECT id, email, nim, name, role_id FROM users WHERE LOWER(email) = ? AND nim = ? LIMIT 1',
+              `SELECT 
+                 users.id, 
+                 users.email, 
+                 users.nim, 
+                 users.name, 
+                 roles.name AS role_name
+               FROM users
+               LEFT JOIN user_roles ON user_roles.user_id = users.id
+               LEFT JOIN roles ON roles.id = user_roles.role_id
+               WHERE LOWER(users.email) = ? AND users.nim = ?
+               ORDER BY CASE roles.name WHEN 'lecturer' THEN 0 ELSE 1 END
+               LIMIT 1`,
               [cleanEmail, cleanNim]
             );
             if (rows.length > 0) {
@@ -43,10 +54,10 @@ export const authOptions: NextAuthOptions = {
 
           const userId = String(userRow.id);
           const userName = String(userRow.name);
-          const roleIdStr = String(userRow.role_id || '').toLowerCase().trim();
+          const roleNameStr = String(userRow.role_name || userRow.role_id || '').toLowerCase().trim();
           const nimStr = String(cleanNim || userRow.nim || '').trim().toUpperCase();
           const isLecturerNim = /^D\d+/i.test(nimStr);
-          const primaryRole: 'student' | 'lecturer' = (roleIdStr === '3' || roleIdStr === 'lecturer' || roleIdStr === 'dosen' || isLecturerNim) ? 'lecturer' : 'student';
+          const primaryRole: 'student' | 'lecturer' = (roleNameStr === 'lecturer' || roleNameStr === 'dosen' || roleNameStr === '3' || isLecturerNim) ? 'lecturer' : 'student';
 
           // Auto-provision profile & default portfolio in App Data DB
           await ensureUserProfileAndPortfolio(userId, userName);
