@@ -55,6 +55,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           icon: <LayoutDashboard className="size-5" />,
         },
         {
+          label: 'Projects',
+          path: '/projects',
+          icon: <FolderKanban className="size-5" />,
+        },
+        {
           label: 'Portfolios',
           path: '/portfolios',
           icon: <FolderKanban className="size-5" />,

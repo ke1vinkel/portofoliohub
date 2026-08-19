@@ -3,9 +3,9 @@
 import React, { createContext, useContext } from 'react';
 import { ThemeProvider, useTheme } from './theme-provider';
 import { AuthProvider, useAuth, User } from './auth-provider';
-import { DatabaseProvider, useDatabase, SimulatedDatabase, Profile, Portfolio, Project, Education, Experience, RecruiterMessage, ThemeConfig } from './db-provider';
+import { DatabaseProvider, useDatabase, SimulatedDatabase, Profile, Portfolio, Project, ProjectLink, Education, Experience, RecruiterMessage, ThemeConfig } from './db-provider';
 
-export type { User, Profile, Portfolio, Project, Education, Experience, RecruiterMessage, SimulatedDatabase, ThemeConfig };
+export type { User, Profile, Portfolio, Project, ProjectLink, Education, Experience, RecruiterMessage, SimulatedDatabase, ThemeConfig };
 
 interface PortfolioContextType {
   db: SimulatedDatabase;

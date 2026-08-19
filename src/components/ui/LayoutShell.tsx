@@ -74,6 +74,24 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({ children 
                       Dashboard
                     </Link>
                     <Link
+                      href="/projects"
+                      onClick={(e) => {
+                        if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                          e.preventDefault();
+                        } else {
+                          setHasUnsavedChanges(false);
+                        }
+                      }}
+                      className={cn(
+                        'text-sm transition-colors',
+                        pathname === '/projects'
+                          ? 'text-foreground font-semibold'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      Projects
+                    </Link>
+                    <Link
                       href="/portfolios"
                       onClick={(e) => {
                         if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to leave?')) {

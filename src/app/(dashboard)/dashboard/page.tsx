@@ -373,32 +373,47 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5">
               <Link
-                href="/portfolios"
-                className="group rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex flex-col gap-2"
+                href="/projects"
+                className="group rounded-2xl border border-border bg-card p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex items-center gap-3"
               >
-                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
                   <FolderKanban className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-foreground">New Portfolio</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">Create title & settings</div>
+                  <div className="text-xs font-semibold text-foreground">Projects Hub</div>
+                  <div className="text-[11px] text-muted-foreground">Add, tag & feature projects</div>
                 </div>
               </Link>
 
               <Link
                 href="/profile"
-                className="group rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex flex-col gap-2"
+                className="group rounded-2xl border border-border bg-card p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex items-center gap-3"
               >
-                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
                   <UserCog className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-foreground">Edit Profile</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">Bio, Skills & Timeline</div>
+                  <div className="text-xs font-semibold text-foreground">Profile & Timeline</div>
+                  <div className="text-[11px] text-muted-foreground">Bio, skills, work & study</div>
                 </div>
               </Link>
+
+              {activePortfolio && (
+                <Link
+                  href={`/portfolios/${activePortfolio.id}/edit`}
+                  className="group rounded-2xl border border-border bg-card p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-xs flex items-center gap-3"
+                >
+                  <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                    <Radio className="size-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-foreground">Portfolio Studio</div>
+                    <div className="text-[11px] text-muted-foreground">Customize theme & layout</div>
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
 
