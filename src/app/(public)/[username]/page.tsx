@@ -1508,33 +1508,39 @@ export default function RecruiterViewPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedProject(null)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[var(--bg-body)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 z-10 cursor-pointer"
-              aria-label="Close Modal"
-            >
-              ✕
-            </button>
-
-            {/* Header Info */}
-            <div className="flex flex-col gap-1.5 pr-8">
-              <div className="flex items-center gap-2">
-                <span className="tag-premium">{selectedProject.category || 'PROJECT'}</span>
-                {selectedProject.featured === 1 && (
-                  <span className="text-[9px] font-mono font-bold tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase border border-amber-500/20">
-                    ★ Featured
+            {/* Modal Top Header */}
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--border-color)] pb-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-lg bg-[var(--accent-light)] border border-[var(--border-color)] px-2.5 py-0.5 text-xs font-medium text-[var(--accent)]">
+                    {selectedProject.category || 'Project'}
                   </span>
-                )}
+                  {selectedProject.featured === 1 && (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 text-xs font-semibold text-amber-500">
+                      ★ Featured
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+                  {selectedProject.title}
+                </h2>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight mt-1 text-[var(--text-primary)]">
-                {selectedProject.title}
-              </h2>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedProject(null)}
+                className="shrink-0 size-9 rounded-xl bg-[var(--bg-body)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+                aria-label="Close"
+                title="Close modal (Esc)"
+              >
+                <X className="size-4" />
+              </button>
             </div>
 
             {/* Embedded Media Preview or Project Image Gallery */}
             {selectedProject.embed_url ? (
-              <div className="w-full aspect-video rounded-xl overflow-hidden bg-black border border-[var(--border-color)] shadow-inner">
+              <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[var(--border-color)] shadow-inner">
                 <iframe
                   src={normalizeEmbedUrl(selectedProject.embed_url)}
                   title={selectedProject.title}
@@ -1550,7 +1556,7 @@ export default function RecruiterViewPage() {
 
               return (
                 <div className="flex flex-col gap-3">
-                  <div className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-[var(--bg-body)] border border-[var(--border-color)] relative group">
+                  <div className="w-full h-64 sm:h-96 rounded-2xl overflow-hidden bg-[var(--bg-body)] border border-[var(--border-color)] relative group shadow-xs">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={displayImg} 
@@ -1560,24 +1566,24 @@ export default function RecruiterViewPage() {
                   </div>
 
                   {galleryImages.length > 1 && (
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                        Visualization Gallery ({galleryImages.length} Pictures)
-                      </span>
-                      <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5">
+                    <div className="flex flex-col gap-2 pt-1">
+                      <div className="text-xs font-semibold text-[var(--text-secondary)]">
+                        Gallery ({galleryImages.length} images)
+                      </div>
+                      <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5">
                         {galleryImages.map((imgUrl, idx) => (
                           <button
                             key={idx}
                             onClick={() => setActiveModalImage(imgUrl)}
-                            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
                               displayImg === imgUrl 
-                                ? 'border-[var(--accent)] scale-105 shadow-md' 
+                                ? 'border-[var(--accent)] scale-105 shadow-md ring-2 ring-[var(--accent-light)]' 
                                 : 'border-[var(--border-color)] opacity-60 hover:opacity-100'
                             }`}
-                            title={`View picture ${idx + 1}`}
+                            title={`View image ${idx + 1}`}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={imgUrl} alt={`Visualization ${idx + 1}`} className="w-full h-full object-cover" />
+                            <img src={imgUrl} alt={`Screenshot ${idx + 1}`} className="w-full h-full object-cover" />
                           </button>
                         ))}
                       </div>
@@ -1587,17 +1593,17 @@ export default function RecruiterViewPage() {
               );
             })()}
 
-            {/* Detailed Description */}
-            <div className="flex flex-col gap-2 border-t border-[var(--border-color)] pt-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
-                Project Overview & Detailed Explanation
-              </h4>
+            {/* Description & Overview */}
+            <div className="flex flex-col gap-3 border-t border-[var(--border-color)] pt-5">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                About the Project
+              </h3>
               {selectedProject.detailed_description ? (
                 <div className="flex flex-col gap-3">
                   {selectedProject.description && (
-                    <div className="text-xs font-medium text-[var(--text-secondary)] italic bg-[var(--bg-body)] p-3 rounded-lg border border-[var(--border-color)]">
-                      "{selectedProject.description}"
-                    </div>
+                    <p className="text-sm text-[var(--text-secondary)] font-medium leading-relaxed bg-[var(--bg-body)] p-3.5 rounded-xl border border-[var(--border-color)]">
+                      {selectedProject.description}
+                    </p>
                   )}
                   <p className="text-xs sm:text-sm text-[var(--text-primary)] opacity-90 leading-relaxed whitespace-pre-line">
                     {selectedProject.detailed_description}
@@ -1615,18 +1621,18 @@ export default function RecruiterViewPage() {
               const metrics = (selectedProject.technologies || []).filter((t: string) => t.includes('%') || (t.startsWith('+') && !isNaN(parseInt(t.charAt(1)))));
               const ndaNotices = (selectedProject.technologies || []).filter((t: string) => t.toLowerCase().includes('nda'));
               return (metrics.length > 0 || ndaNotices.length > 0) && (
-                <div className="flex flex-col gap-2 bg-[var(--bg-body)] p-3.5 rounded-xl border border-[var(--border-color)]">
-                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
-                    Key Impact & Requirements
+                <div className="flex flex-col gap-2.5 bg-[var(--bg-body)] p-4 rounded-xl border border-[var(--border-color)]">
+                  <h4 className="text-xs font-semibold text-[var(--text-secondary)]">
+                    Highlights & Impact
                   </h4>
                   <div className="flex flex-wrap gap-3">
                     {metrics.map((metric: string) => (
-                      <div key={metric} className="text-xs font-mono font-semibold text-[var(--accent)] flex items-center gap-1.5">
+                      <div key={metric} className="text-xs font-semibold text-[var(--accent)] flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-[var(--accent)]" /> {metric}
                       </div>
                     ))}
                     {ndaNotices.map((nda: string) => (
-                      <div key={nda} className="text-xs font-mono text-[var(--text-muted)] flex items-center gap-1.5 italic">
+                      <div key={nda} className="text-xs text-[var(--text-muted)] flex items-center gap-1.5 italic">
                         <Lock className="size-3 inline" /> {nda}
                       </div>
                     ))}
@@ -1637,15 +1643,15 @@ export default function RecruiterViewPage() {
 
             {/* Tools, Skills & Technologies */}
             {selectedProject.technologies && selectedProject.technologies.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
-                  Tools, Skills & Technologies
+              <div className="flex flex-col gap-2.5 border-t border-[var(--border-color)] pt-4">
+                <h4 className="text-xs font-semibold text-[var(--text-secondary)]">
+                  Tech Stack & Skills
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedProject.technologies.map((tech: string) => (
                     <span 
                       key={tech} 
-                      className="text-xs font-mono text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-md border border-[var(--border-color)]"
+                      className="text-xs font-medium text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-lg border border-[var(--border-color)]"
                     >
                       {tech}
                     </span>
@@ -1696,20 +1702,13 @@ export default function RecruiterViewPage() {
       <footer className="footer-premium">
         <div className="container-premium flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3">
-            <span>© COPYRIGHT 2026 {student.name.toUpperCase()}</span>
+            <span>© {new Date().getFullYear()} {student.name.toUpperCase()}</span>
             {profile?.contact_email && (
               <>
                 <span className="dot-premium hidden sm:inline">·</span>
                 <a href={`mailto:${profile.contact_email}`}>{profile.contact_email}</a>
               </>
             )}
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <a href="#privacy" className="hover:underline transition-all">Privacy Policy</a>
-            <span className="text-[var(--border-color)]">·</span>
-            <a href="#terms" className="hover:underline transition-all">Terms of Service</a>
-            <span className="text-[var(--border-color)]">·</span>
-            <a href="#recruiter-guidelines" className="hover:underline transition-all">Guidelines</a>
           </div>
         </div>
       </footer>

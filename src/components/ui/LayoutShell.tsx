@@ -23,11 +23,18 @@ export const LayoutShell: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const isLecturer = currentUser?.role === 'lecturer';
+  const isDashboardRoute =
+    !!pathname &&
+    (pathname === '/dashboard' ||
+      pathname.startsWith('/projects') ||
+      pathname.startsWith('/portfolios') ||
+      pathname.startsWith('/profile') ||
+      pathname === '/admin');
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background text-foreground">
-      {/* Top Navigation Bar for authenticated sessions */}
-      {isLoggedIn && currentUser && (
+      {/* Top Navigation Bar only for authenticated dashboard sessions */}
+      {isLoggedIn && currentUser && isDashboardRoute && (
         <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-10 xl:px-14 2xl:px-16">
             <div className="flex items-center gap-6 lg:gap-8">
