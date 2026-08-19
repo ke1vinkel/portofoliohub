@@ -9,9 +9,12 @@ import {
   Globe,
   Tag,
   Layers,
+  FolderKanban,
+  Check,
+  Plus,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/SocialIcons';
-import { Project } from '@/components/providers/portfolio-provider';
+import { Project, usePortfolio } from '@/components/providers/portfolio-provider';
 import { formatExternalUrl } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +23,9 @@ interface ProjectCardProps {
   onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
   onToggleFeatured?: (project: Project) => void;
+  currentPortfolioId?: string;
+  isAssignedToCurrentPortfolio?: boolean;
+  onTogglePortfolioVisibility?: (project: Project, shouldShow: boolean) => void;
 }
 
 export function ProjectCard({
@@ -27,8 +33,32 @@ export function ProjectCard({
   onEdit,
   onDelete,
   onToggleFeatured,
+  currentPortfolioId,
+  isAssignedToCurrentPortfolio,
+  onTogglePortfolioVisibility,
 }: ProjectCardProps) {
+  const { db, currentUser } = usePortfolio();
   const isFeatured = project.featured === 1;
+
+  // Find all portfolios that contain this project
+  const userPortfolios = db.portfolios.filter(
+    (p) => (p.user_id || (p as any).user) === currentUser?.id
+  );
+  const assignedPortfolios = userPortfolios.filter((p) =>
+    db.projects.some(
+      (proj) =>
+        proj.portfolio_id === p.id &&
+        (proj.id === project.id ||
+          proj.title.trim().toLowerCase() === project.title.trim().toLowerCase())
+    )
+  );
+
+  const isInCurrent = isAssignedToCurrentPortfolio !== undefined
+    ? isAssignedToCurrentPortfolio
+    : currentPortfolioId
+    ? project.portfolio_id === currentPortfolioId ||
+      assignedPortfolios.some((p) => p.id === currentPortfolioId)
+    : true;
 
   return (
     <div
@@ -100,10 +130,63 @@ export function ProjectCard({
             )}
           </div>
         )}
+
+        {/* Assigned Portfolios Badges */}
+        {userPortfolios.length > 1 && assignedPortfolios.length > 0 && (
+          <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <FolderKanban className="size-3 text-muted-foreground" />
+              In {assignedPortfolios.length} {assignedPortfolios.length === 1 ? 'portfolio' : 'portfolios'}:
+            </span>
+            {assignedPortfolios.map((ap) => (
+              <span
+                key={ap.id}
+                className={cn(
+                  'inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-medium border',
+                  currentPortfolioId && ap.id === currentPortfolioId
+                    ? 'border-primary/40 bg-primary/10 text-primary font-semibold'
+                    : 'border-border/60 bg-muted/40 text-muted-foreground'
+                )}
+                title={ap.title}
+              >
+                {ap.title}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Visibility Toggle Bar (when displayed in library mode or when toggle handler is passed) */}
+      {onTogglePortfolioVisibility && (
+        <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => onTogglePortfolioVisibility(project, !isInCurrent)}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all w-full justify-center',
+              isInCurrent
+                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 group/btn'
+                : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground'
+            )}
+          >
+            {isInCurrent ? (
+              <>
+                <Check className="size-3.5 group-hover/btn:hidden" />
+                <span className="group-hover/btn:hidden">Showing in this portfolio</span>
+                <span className="hidden group-hover/btn:inline">Hide from this portfolio</span>
+              </>
+            ) : (
+              <>
+                <Plus className="size-3.5" />
+                <span>Show in this portfolio</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Card Footer: Links & Action Buttons */}
-      <div className="mt-5 flex items-center justify-between pt-3 border-t border-border/60">
+      <div className={cn("flex items-center justify-between", onTogglePortfolioVisibility ? "mt-3 pt-2" : "mt-5 pt-3 border-t border-border/60")}>
         {/* External Links */}
         <div className="flex items-center gap-2">
           {project.github_url && (

@@ -26,6 +26,8 @@ interface PortfolioContextType {
   addProject: (portfolioId: string, project: Omit<Project, 'id' | 'portfolio_id' | 'created_at'>) => Promise<boolean>;
   updateProject: (id: string, project: Partial<Project>) => Promise<boolean>;
   deleteProject: (id: string) => Promise<boolean>;
+  toggleProjectInPortfolio: (project: Project, targetPortfolioId: string, shouldShow: boolean) => Promise<boolean>;
+  syncProjectPortfolios: (projectData: any, selectedPortfolioIds: string[], originalProject?: Project | null) => Promise<boolean>;
   addExperience: (portfolioId: string, exp: Omit<Experience, 'id' | 'portfolio_id'>) => Promise<void>;
   updateExperience: (id: string, exp: Partial<Experience>) => Promise<void>;
   deleteExperience: (id: string) => Promise<void>;
@@ -61,6 +63,8 @@ const PortfolioContextAggregator: React.FC<{ children: React.ReactNode }> = ({ c
     addProject,
     updateProject,
     deleteProject,
+    toggleProjectInPortfolio,
+    syncProjectPortfolios,
     addExperience,
     updateExperience,
     deleteExperience,
@@ -99,6 +103,8 @@ const PortfolioContextAggregator: React.FC<{ children: React.ReactNode }> = ({ c
         addProject,
         updateProject,
         deleteProject,
+        toggleProjectInPortfolio,
+        syncProjectPortfolios,
         addExperience,
         updateExperience,
         deleteExperience,

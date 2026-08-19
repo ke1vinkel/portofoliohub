@@ -15,7 +15,7 @@ import { ProjectManager } from '@/components/portfolio/ProjectManager';
 import { Button } from '@/components/ui/Button';
 
 export default function ProjectsPage() {
-  const { db, dbLoaded, currentUser, activePortfolioId } = usePortfolio();
+  const { db, dbLoaded, currentUser, activePortfolioId, setActivePortfolio } = usePortfolio();
   const router = useRouter();
 
   if (!currentUser) return null;
@@ -63,7 +63,24 @@ export default function ProjectsPage() {
         </div>
 
         {/* Quick actions & stats */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {userPortfolios.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">Portfolio:</span>
+              <select
+                value={activePortfolio?.id || ''}
+                onChange={(e) => setActivePortfolio(e.target.value)}
+                className="h-9 rounded-xl border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-hidden shadow-xs"
+              >
+                {userPortfolios.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title} ({p.is_public === 1 ? 'Live' : 'Private'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {featuredProjects > 0 && (
             <div className="hidden sm:flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-500">
               <Sparkles className="size-3.5" />

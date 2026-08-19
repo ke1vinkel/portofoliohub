@@ -144,6 +144,8 @@ interface DatabaseContextType {
   addProject: (portfolioId: string, project: Omit<Project, 'id' | 'portfolio_id' | 'created_at'>) => Promise<boolean>;
   updateProject: (id: string, project: Partial<Project>) => Promise<boolean>;
   deleteProject: (id: string) => Promise<boolean>;
+  toggleProjectInPortfolio: (project: Project, targetPortfolioId: string, shouldShow: boolean) => Promise<boolean>;
+  syncProjectPortfolios: (projectData: any, selectedPortfolioIds: string[], originalProject?: Project | null) => Promise<boolean>;
   addExperience: (portfolioId: string, exp: Omit<Experience, 'id' | 'portfolio_id'>) => Promise<void>;
   updateExperience: (id: string, exp: Partial<Experience>) => Promise<void>;
   deleteExperience: (id: string) => Promise<void>;
@@ -394,6 +396,106 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const toggleProjectInPortfolio = async (
+    project: Project,
+    targetPortfolioId: string,
+    shouldShow: boolean
+  ): Promise<boolean> => {
+    try {
+      if (shouldShow) {
+        // Check if project already in target portfolio
+        const existing = db.projects.find(
+          (p) => p.portfolio_id === targetPortfolioId && (p.id === project.id || p.title.trim().toLowerCase() === project.title.trim().toLowerCase())
+        );
+        if (!existing) {
+          return await addProject(targetPortfolioId, {
+            title: project.title,
+            description: project.description || '',
+            detailed_description: project.detailed_description,
+            image: project.image,
+            images: project.images || [],
+            github_url: project.github_url,
+            live_url: project.live_url,
+            technologies: project.technologies || [],
+            featured: project.featured || 0,
+            link_type: project.link_type || 'none',
+            category: project.category || 'Other',
+            embed_url: project.embed_url || '',
+            links: project.links || [],
+          });
+        }
+        return true;
+      } else {
+        // Remove from target portfolio
+        const match = db.projects.find(
+          (p) => p.portfolio_id === targetPortfolioId && (p.id === project.id || p.title.trim().toLowerCase() === project.title.trim().toLowerCase())
+        );
+        if (match) {
+          return await deleteProject(match.id);
+        }
+        return true;
+      }
+    } catch (e) {
+      console.error('Error toggling project in portfolio:', e);
+      return false;
+    }
+  };
+
+  const syncProjectPortfolios = async (
+    projectData: any,
+    selectedPortfolioIds: string[],
+    originalProject?: Project | null
+  ): Promise<boolean> => {
+    if (!currentUser) return false;
+    try {
+      const userPortfolios = db.portfolios.filter(
+        (p) => (p.user_id || (p as any).user) === currentUser.id
+      );
+      const userPortfolioIds = userPortfolios.map((p) => p.id);
+
+      // 1. For every selected portfolio, add or update the project
+      for (const portId of selectedPortfolioIds) {
+        const existing = db.projects.find(
+          (p) => p.portfolio_id === portId && (
+            (originalProject && p.id === originalProject.id) ||
+            (originalProject && p.title.trim().toLowerCase() === originalProject.title.trim().toLowerCase()) ||
+            p.title.trim().toLowerCase() === projectData.title.trim().toLowerCase()
+          )
+        );
+
+        if (existing) {
+          await updateProject(existing.id, {
+            ...projectData,
+            portfolio_id: portId,
+          });
+        } else {
+          await addProject(portId, projectData);
+        }
+      }
+
+      // 2. For unselected user portfolios, if this project previously existed there, remove it
+      if (originalProject) {
+        const unselectedIds = userPortfolioIds.filter((id) => !selectedPortfolioIds.includes(id));
+        for (const unselectedId of unselectedIds) {
+          const toRemove = db.projects.find(
+            (p) => p.portfolio_id === unselectedId && (
+              p.id === originalProject.id ||
+              p.title.trim().toLowerCase() === originalProject.title.trim().toLowerCase()
+            )
+          );
+          if (toRemove) {
+            await deleteProject(toRemove.id);
+          }
+        }
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Error syncing project portfolios:', err);
+      return false;
+    }
+  };
+
   const addExperience = async (portfolioId: string, exp: Omit<Experience, 'id' | 'portfolio_id'>) => {
     try {
       const res = await apiFetch('/api/experiences', {
@@ -576,6 +678,8 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addProject,
         updateProject,
         deleteProject,
+        toggleProjectInPortfolio,
+        syncProjectPortfolios,
         addExperience,
         updateExperience,
         deleteExperience,

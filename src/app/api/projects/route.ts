@@ -19,6 +19,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Portfolio ID and Title are required' }, { status: 400 });
     }
 
+    // Verify that the target portfolio exists
+    const portCheck = await turso.execute({
+      sql: 'SELECT id FROM portfolios WHERE id = ?',
+      args: [portfolioId],
+    });
+
+    if (portCheck.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'A valid portfolio is required before adding projects. Please create a portfolio first.' },
+        { status: 400 }
+      );
+    }
+
     const id = crypto.randomUUID();
 
     await turso.execute({
@@ -60,7 +73,8 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, title, description, detailed_description, image, images, github_url, live_url, technologies, featured, link_type, category, embed_url, links } = body;
+    const { id, portfolio_id, portfolio, title, description, detailed_description, image, images, github_url, live_url, technologies, featured, link_type, category, embed_url, links } = body;
+    const targetPortfolioId = portfolio_id || portfolio;
 
     if (!id) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
@@ -68,6 +82,7 @@ export async function PUT(req: Request) {
 
     await turso.execute({
       sql: `UPDATE projects SET
+        portfolio_id = COALESCE(?, portfolio_id),
         title = COALESCE(?, title),
         description = COALESCE(?, description),
         detailed_description = ?,
@@ -83,8 +98,9 @@ export async function PUT(req: Request) {
         links = COALESCE(?, links)
       WHERE id = ?`,
       args: [
-        title,
-        description,
+        targetPortfolioId !== undefined ? targetPortfolioId : null,
+        title !== undefined ? title : null,
+        description !== undefined ? description : null,
         detailed_description !== undefined ? detailed_description : null,
         image !== undefined ? image : null,
         images !== undefined ? JSON.stringify(images) : null,
@@ -92,9 +108,9 @@ export async function PUT(req: Request) {
         live_url !== undefined ? live_url : null,
         technologies !== undefined ? JSON.stringify(technologies) : null,
         featured !== undefined ? (featured ? 1 : 0) : null,
-        link_type,
-        category,
-        embed_url,
+        link_type !== undefined ? link_type : null,
+        category !== undefined ? category : null,
+        embed_url !== undefined ? embed_url : null,
         links !== undefined ? JSON.stringify(links) : null,
         id,
       ],

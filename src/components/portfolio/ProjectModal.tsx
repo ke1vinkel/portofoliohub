@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   X,
   Star,
@@ -12,8 +13,11 @@ import {
   Sparkles,
   Layers,
   Code2,
+  FolderKanban,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
-import { Project, ProjectLink } from '@/components/providers/portfolio-provider';
+import { Project, ProjectLink, usePortfolio } from '@/components/providers/portfolio-provider';
 import { isValidImageUrl, formatExternalUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -53,8 +57,9 @@ const CATEGORIES = [
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (projectData: any) => Promise<void>;
+  onSave: (projectData: any, selectedPortfolioIds?: string[]) => Promise<void>;
   project?: Project | null;
+  currentPortfolioId?: string;
 }
 
 export function ProjectModal({
@@ -62,7 +67,9 @@ export function ProjectModal({
   onClose,
   onSave,
   project,
+  currentPortfolioId,
 }: ProjectModalProps) {
+  const { db, currentUser } = usePortfolio();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [detailedDescription, setDetailedDescription] = useState('');
@@ -75,9 +82,14 @@ export function ProjectModal({
   const [featured, setFeatured] = useState(false);
   const [links, setLinks] = useState<ProjectLink[]>([]);
   const [embedUrl, setEmbedUrl] = useState('');
+  const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basics' | 'media' | 'links'>('basics');
+
+  const userPortfolios = db.portfolios.filter(
+    (p) => (p.user_id || (p as any).user) === currentUser?.id
+  );
 
   useEffect(() => {
     if (project) {
@@ -109,6 +121,24 @@ export function ProjectModal({
             ...(project.live_url ? [{ type: 'live' as const, url: project.live_url, label: 'Live Demo' }] : []),
           ];
       setLinks(initialLinks);
+
+      // Find which portfolios currently contain this project
+      const existingPortfolioIds = userPortfolios
+        .filter((p) =>
+          db.projects.some(
+            (proj) =>
+              proj.portfolio_id === p.id &&
+              (proj.id === project.id ||
+                proj.title.trim().toLowerCase() === project.title.trim().toLowerCase())
+          )
+        )
+        .map((p) => p.id);
+
+      setSelectedPortfolioIds(
+        existingPortfolioIds.length > 0
+          ? existingPortfolioIds
+          : [currentPortfolioId || project.portfolio_id || userPortfolios[0]?.id].filter(Boolean) as string[]
+      );
     } else {
       setTitle('');
       setDescription('');
@@ -124,12 +154,30 @@ export function ProjectModal({
         { type: 'github', url: '', label: 'Source Code' },
         { type: 'live', url: '', label: 'Live Preview' },
       ]);
+      setSelectedPortfolioIds(
+        [currentPortfolioId || userPortfolios[0]?.id].filter(Boolean) as string[]
+      );
     }
     setError('');
     setActiveTab('basics');
-  }, [project, isOpen]);
+  }, [project, isOpen, currentPortfolioId, currentUser?.id]);
 
   if (!isOpen) return null;
+
+  const handleTogglePortfolio = (portId: string) => {
+    if (selectedPortfolioIds.includes(portId)) {
+      if (selectedPortfolioIds.length === 1) {
+        // Keep at least one selected or inform user
+        setError('A project must be assigned to at least one portfolio.');
+        return;
+      }
+      setError('');
+      setSelectedPortfolioIds(selectedPortfolioIds.filter((id) => id !== portId));
+    } else {
+      setError('');
+      setSelectedPortfolioIds([...selectedPortfolioIds, portId]);
+    }
+  };
 
   const handleAddTech = (tech: string) => {
     const trimmed = tech.trim();
@@ -174,6 +222,17 @@ export function ProjectModal({
       return;
     }
 
+    if (userPortfolios.length === 0) {
+      setError('You must create a portfolio first before adding projects.');
+      return;
+    }
+
+    if (selectedPortfolioIds.length === 0) {
+      setError('Please select at least one portfolio to show this project in.');
+      setActiveTab('basics');
+      return;
+    }
+
     const finalCategory = category === 'Other' && customCategory.trim()
       ? customCategory.trim()
       : category;
@@ -184,20 +243,23 @@ export function ProjectModal({
 
     setSaving(true);
     try {
-      await onSave({
-        title: title.trim(),
-        description: description.trim(),
-        detailed_description: detailedDescription.trim() || null,
-        category: finalCategory,
-        image: image.trim() || null,
-        images,
-        technologies,
-        featured: featured ? 1 : 0,
-        links: validLinks,
-        github_url: githubLink,
-        live_url: liveLink,
-        embed_url: embedUrl.trim(),
-      });
+      await onSave(
+        {
+          title: title.trim(),
+          description: description.trim(),
+          detailed_description: detailedDescription.trim() || null,
+          category: finalCategory,
+          image: image.trim() || null,
+          images,
+          technologies,
+          featured: featured ? 1 : 0,
+          links: validLinks,
+          github_url: githubLink,
+          live_url: liveLink,
+          embed_url: embedUrl.trim(),
+        },
+        selectedPortfolioIds
+      );
       onClose();
     } catch (err: any) {
       setError(err?.message || 'Failed to save project');
@@ -233,21 +295,52 @@ export function ProjectModal({
           </button>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex border-b border-border/80 px-6 bg-muted/10 gap-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab('basics')}
-            className={cn(
-              'py-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5',
-              activeTab === 'basics'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Layers className="size-3.5" />
-            Basics & Tech
-          </button>
+        {userPortfolios.length === 0 ? (
+          <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
+              <AlertCircle className="size-7" />
+            </div>
+            <div className="space-y-1.5 max-w-sm">
+              <h4 className="text-base font-semibold text-foreground">Portfolio Required</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                You must have at least one portfolio available before you can add new projects. Create a portfolio first to get started!
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+              >
+                Close
+              </Button>
+              <Link
+                href="/portfolios"
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="size-4" /> Create Portfolio
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Tab switcher */}
+            <div className="flex border-b border-border/80 px-6 bg-muted/10 gap-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab('basics')}
+                className={cn(
+                  'py-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5',
+                  activeTab === 'basics'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Layers className="size-3.5" />
+                Basics & Tech
+              </button>
           <button
             type="button"
             onClick={() => setActiveTab('media')}
@@ -434,6 +527,77 @@ export function ProjectModal({
                   className="size-4 rounded-sm border-input text-primary focus:ring-primary"
                 />
               </div>
+
+              {/* Portfolios & Visibility */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FolderKanban className="size-4 text-primary" />
+                    <Label className="text-xs font-semibold text-foreground">
+                      Show in Portfolios ({selectedPortfolioIds.length} of {userPortfolios.length || 1} selected)
+                    </Label>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground">
+                    Choose which portfolio(s) display this project
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {userPortfolios.map((p) => {
+                    const isSelected = selectedPortfolioIds.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleTogglePortfolio(p.id)}
+                        className={cn(
+                          'flex items-center justify-between p-3 rounded-xl border text-left transition-all',
+                          isSelected
+                            ? 'border-primary/50 bg-primary/5 shadow-xs'
+                            : 'border-border/80 bg-background/50 hover:bg-muted/40 opacity-70 hover:opacity-100'
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div
+                            className={cn(
+                              'flex size-5 shrink-0 items-center justify-center rounded-md border text-xs transition-colors',
+                              isSelected
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-muted-foreground/40 bg-background'
+                            )}
+                          >
+                            {isSelected && <Check className="size-3.5 stroke-[2.5]" />}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold text-foreground truncate">
+                              {p.title}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground truncate">
+                              /{p.slug || 'portfolio'}
+                            </div>
+                          </div>
+                        </div>
+                        <span
+                          className={cn(
+                            'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
+                            p.is_public === 1
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-muted text-muted-foreground'
+                          )}
+                        >
+                          {p.is_public === 1 ? 'Live' : 'Private'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {userPortfolios.length <= 1 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Tip: You can create multiple tailored portfolios from the Portfolios page and choose which projects appear in each.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -567,6 +731,8 @@ export function ProjectModal({
             </Button>
           </div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );
