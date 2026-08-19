@@ -169,8 +169,27 @@ const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined
 
 export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
-  const [db, setDb] = useState<SimulatedDatabase>(INITIAL_DB);
-  const [dbLoaded, setDbLoaded] = useState<boolean>(false);
+  const [db, setDb] = useState<SimulatedDatabase>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('portfolio_hub_db');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {
+        // Fallback to initial DB on error
+      }
+    }
+    return INITIAL_DB;
+  });
+  const [dbLoaded, setDbLoaded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return !!localStorage.getItem('portfolio_hub_db');
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  });
   const [activePortfolioId, setActivePortfolioId] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
 

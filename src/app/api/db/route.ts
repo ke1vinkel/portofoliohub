@@ -18,20 +18,37 @@ export async function GET() {
       console.error('Profile auto-provision error (non-fatal):', provErr);
     }
 
-    // 1. Users from Central Auth DB via direct HTTP fetch (joining user_roles & roles)
-    const userRows = await queryAuthDb(`
-      SELECT 
-        users.id, 
-        users.email, 
-        users.nim, 
-        users.name, 
-        roles.name AS role_name
-      FROM users
-      LEFT JOIN user_roles ON user_roles.user_id = users.id
-      LEFT JOIN roles ON roles.id = user_roles.role_id
-      GROUP BY users.id
-      ORDER BY users.name ASC
-    `);
+    // Execute central Auth DB query and all Portfolio DB queries in parallel for optimal speed
+    const [
+      userRows,
+      profilesRes,
+      portfoliosRes,
+      projectsRes,
+      educationRes,
+      experiencesRes,
+      messagesRes,
+    ] = await Promise.all([
+      queryAuthDb(`
+        SELECT 
+          users.id, 
+          users.email, 
+          users.nim, 
+          users.name, 
+          roles.name AS role_name
+        FROM users
+        LEFT JOIN user_roles ON user_roles.user_id = users.id
+        LEFT JOIN roles ON roles.id = user_roles.role_id
+        GROUP BY users.id
+        ORDER BY users.name ASC
+      `),
+      turso.execute('SELECT * FROM profiles'),
+      turso.execute('SELECT * FROM portfolios'),
+      turso.execute('SELECT * FROM projects'),
+      turso.execute('SELECT * FROM education'),
+      turso.execute('SELECT * FROM experiences'),
+      turso.execute('SELECT * FROM recruiter_messages'),
+    ]);
+
     const users = userRows.map((row: any) => {
       const email = String(row.email || '');
       const name = String(row.name || '');
@@ -50,14 +67,6 @@ export async function GET() {
         username: nameSlug || emailSlug,
       };
     });
-
-    // 2. Portfolio App tables (Portfolios App DB)
-    const profilesRes = await turso.execute('SELECT * FROM profiles');
-    const portfoliosRes = await turso.execute('SELECT * FROM portfolios');
-    const projectsRes = await turso.execute('SELECT * FROM projects');
-    const educationRes = await turso.execute('SELECT * FROM education');
-    const experiencesRes = await turso.execute('SELECT * FROM experiences');
-    const messagesRes = await turso.execute('SELECT * FROM recruiter_messages');
 
     // Parse JSON columns in profiles
     const profiles: Record<string, any> = {};
