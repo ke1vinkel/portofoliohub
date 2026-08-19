@@ -18,12 +18,12 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'PortfolioHub',
-    template: '%s | PortfolioHub',
+    default: 'Portfolio App',
+    template: '%s | Portfolio App',
   },
   description: 'Create and share your professional portfolio',
   openGraph: {
-    title: 'PortfolioHub',
+    title: 'Portfolio App',
     description: 'Create and share your professional portfolio',
   },
 };

@@ -77,7 +77,7 @@ export default function LoginPage() {
             Internal access
           </p>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Sign in to PortfolioHub
+            Sign in to Portfolio App
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Sign in to manage and customize your professional portfolios.

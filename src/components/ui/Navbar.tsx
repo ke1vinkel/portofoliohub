@@ -11,7 +11,7 @@ export const Navbar = () => {
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold text-blue-600">
-          PortfolioHub
+          Portfolio App
         </Link>
         
         <div className="flex items-center gap-4">
