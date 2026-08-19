@@ -225,9 +225,11 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Globe className="size-3.5 text-primary" />
-                      Live Recruiter URL
+                      {activePortfolio.is_public === 1 ? 'Live Recruiter URL' : 'Portfolio URL (Private)'}
                     </span>
-                    <span className="badge badge-public text-[9px]">Live Active</span>
+                    <span className={`badge ${activePortfolio.is_public === 1 ? 'badge-public' : 'badge-private'} text-[9px]`}>
+                      {activePortfolio.is_public === 1 ? '● Live Active' : '○ Private'}
+                    </span>
                   </div>
 
                   <div className="font-mono text-xs text-foreground bg-background/80 px-3 py-2 rounded-lg border border-border/60 truncate select-all">

@@ -1033,7 +1033,7 @@ export default function RecruiterViewPage() {
     show_projects: true,
     show_experience: true,
     show_education: true,
-    show_contact: true,
+    show_contact: false,
   };
 
   const avatarUrl = profile?.avatar || "https://sm.ign.com/ign_ap/cover/a/avatar-gen/avatar-generations_hugw.jpg";
@@ -1439,7 +1439,7 @@ export default function RecruiterViewPage() {
           </div>
 
           {/* Recruiter Contact Form */}
-          {sections.show_contact !== false && (
+          {sections.show_contact === true && (
             <div className="section-block mt-16 pt-10 border-t border-[var(--border-color)] max-w-xl mx-auto w-full animate-fadeIn">
               <div className="section-label-premium text-center mb-6">+ Send Message</div>
               {contactSuccess ? (

@@ -141,7 +141,7 @@ export default function AdminDashboardPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search students..."
-              className="pl-8.5 pr-8 h-8 text-xs"
+              className="pl-9 pr-8 h-8 text-xs"
             />
             {searchQuery && (
               <button

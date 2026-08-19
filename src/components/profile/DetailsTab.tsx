@@ -26,7 +26,6 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
   const [major, setMajor] = useState(profile?.major || '');
   const [university, setUniversity] = useState(profile?.university || '');
   const [location, setLocation] = useState(profile?.location || 'Jakarta');
-  const [customDomain, setCustomDomain] = useState(profile?.custom_domain || '');
   const [cvUrl, setCvUrl] = useState(profile?.cv_url || '');
   const [heroBadge, setHeroBadge] = useState(profile?.hero_badge_text || '✦ Available for opportunities');
 
@@ -41,7 +40,7 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
   const [secProjects, setSecProjects] = useState(profile?.sections?.show_projects !== false);
   const [secExperience, setSecExperience] = useState(profile?.sections?.show_experience !== false);
   const [secEducation, setSecEducation] = useState(profile?.sections?.show_education !== false);
-  const [secContact, setSecContact] = useState(profile?.sections?.show_contact !== false);
+  const [secContact, setSecContact] = useState(Boolean(profile?.sections?.show_contact));
 
   // Social Links
   const [github, setGithub] = useState(profile?.github || '');
@@ -58,7 +57,6 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       major !== (profile.major || '') ||
       university !== (profile.university || '') ||
       location !== (profile.location || 'Jakarta') ||
-      customDomain !== (profile.custom_domain || '') ||
       cvUrl !== (profile.cv_url || '') ||
       heroBadge !== (profile.hero_badge_text || '') ||
       typingWords !== (profile.typing_words?.join(', ') || '') ||
@@ -69,7 +67,7 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       secProjects !== (profile.sections?.show_projects !== false) ||
       secExperience !== (profile.sections?.show_experience !== false) ||
       secEducation !== (profile.sections?.show_education !== false) ||
-      secContact !== (profile.sections?.show_contact !== false) ||
+      secContact !== (Boolean(profile.sections?.show_contact)) ||
       github !== (profile.github || '') ||
       linkedin !== (profile.linkedin || '') ||
       twitter !== (profile.twitter || '') ||
@@ -85,7 +83,6 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       setMajor(profile.major || '');
       setUniversity(profile.university || '');
       setLocation(profile.location || 'Jakarta');
-      setCustomDomain(profile.custom_domain || '');
       setCvUrl(profile.cv_url || '');
       setHeroBadge(profile.hero_badge_text || '✦ Available for opportunities');
 
@@ -98,7 +95,7 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       setSecProjects(profile.sections?.show_projects !== false);
       setSecExperience(profile.sections?.show_experience !== false);
       setSecEducation(profile.sections?.show_education !== false);
-      setSecContact(profile.sections?.show_contact !== false);
+      setSecContact(Boolean(profile.sections?.show_contact));
 
       setGithub(profile.github || '');
       setLinkedin(profile.linkedin || '');
@@ -138,7 +135,6 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
       major,
       university,
       location,
-      custom_domain: customDomain.trim(),
       cv_url: cvUrl.trim(),
       hero_badge_text: heroBadge.trim(),
       typing_words: wordsArray.length > 0 ? wordsArray : [currentUser.name],
@@ -317,22 +313,12 @@ export const DetailsTab: React.FC<DetailsTabProps> = ({ setIsDirty, profile }) =
         </CardContent>
       </Card>
 
-      {/* Social Links & Domain */}
+      {/* Social Links */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Social Links & Domain</CardTitle>
+          <CardTitle className="text-base">Social Links</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="domain-input">Custom Domain (Optional)</Label>
-            <Input
-              id="domain-input"
-              type="text"
-              value={customDomain}
-              onChange={(e) => setCustomDomain(e.target.value)}
-              placeholder="e.g. johndoe.me"
-            />
-          </div>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="contact-email-input">Contact Email (Optional)</Label>
             <Input

@@ -188,7 +188,7 @@ export async function ensureUserProfileAndPortfolio(userId: string, name: string
             show_projects: true,
             show_experience: true,
             show_education: true,
-            show_contact: true,
+            show_contact: false,
           }),
         ],
       });
