@@ -7,12 +7,14 @@ export async function GET() {
   try {
     await initDatabase();
 
-    // Auto-provision profile for the logged in user if they don't have one yet
+    // Auto-provision profile ONLY for students if they don't have one yet
     try {
       const session = await getServerSession(authOptions);
       if (session?.user) {
         const u = session.user as any;
-        await ensureUserProfileAndPortfolio(String(u.id), String(u.name || u.email || 'User'));
+        if (u.role === 'student') {
+          await ensureUserProfileAndPortfolio(String(u.id), String(u.name || u.email || 'User'));
+        }
       }
     } catch (provErr) {
       console.error('Profile auto-provision error (non-fatal):', provErr);

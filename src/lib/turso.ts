@@ -97,6 +97,38 @@ export async function queryAuthDb(
   return result.rows;
 }
 
+export async function cleanLecturerProfilesAndPortfolios(): Promise<void> {
+  try {
+    const lecturerRows = await queryAuthDb(`
+      SELECT users.id, users.nim, roles.name AS role_name
+      FROM users
+      LEFT JOIN user_roles ON user_roles.user_id = users.id
+      LEFT JOIN roles ON roles.id = user_roles.role_id
+      WHERE LOWER(COALESCE(roles.name, '')) IN ('lecturer', 'dosen')
+         OR roles.id = 3
+         OR UPPER(COALESCE(users.nim, '')) LIKE 'D%'
+    `);
+
+    const lecturerIds = Array.from(new Set(lecturerRows.map((r: any) => String(r.id))));
+    for (const lid of lecturerIds) {
+      // Find portfolios belonging to lecturer
+      const ports = await turso.execute({
+        sql: 'SELECT id FROM portfolios WHERE user_id = ?',
+        args: [lid],
+      });
+      for (const p of ports.rows) {
+        await turso.execute({ sql: 'DELETE FROM projects WHERE portfolio_id = ?', args: [p.id] });
+        await turso.execute({ sql: 'DELETE FROM experiences WHERE portfolio_id = ?', args: [p.id] });
+        await turso.execute({ sql: 'DELETE FROM education WHERE portfolio_id = ?', args: [p.id] });
+      }
+      await turso.execute({ sql: 'DELETE FROM portfolios WHERE user_id = ?', args: [lid] });
+      await turso.execute({ sql: 'DELETE FROM profiles WHERE user_id = ?', args: [lid] });
+    }
+  } catch (err) {
+    console.error('Error cleaning lecturer profiles/portfolios:', err);
+  }
+}
+
 let isInitialized = false;
 
 export async function initDatabase(): Promise<void> {
@@ -118,6 +150,9 @@ export async function initDatabase(): Promise<void> {
   } catch (e) {
     // Ignore if column already exists
   }
+
+  // Clean any legacy profiles or portfolios belonging to lecturers
+  await cleanLecturerProfilesAndPortfolios();
 }
 
 export async function ensureUserProfileAndPortfolio(userId: string, name: string) {

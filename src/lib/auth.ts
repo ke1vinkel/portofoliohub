@@ -59,8 +59,10 @@ export const authOptions: NextAuthOptions = {
           const isLecturerNim = /^D\d+/i.test(nimStr);
           const primaryRole: 'student' | 'lecturer' = (roleNameStr === 'lecturer' || roleNameStr === 'dosen' || roleNameStr === '3' || isLecturerNim) ? 'lecturer' : 'student';
 
-          // Auto-provision profile & default portfolio in App Data DB
-          await ensureUserProfileAndPortfolio(userId, userName);
+          // Auto-provision profile & default portfolio in App Data DB only for students
+          if (primaryRole === 'student') {
+            await ensureUserProfileAndPortfolio(userId, userName);
+          }
 
           const nameSlug = userName.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
           const emailSlug = (cleanEmail.includes('@') ? cleanEmail.split('@')[0] : cleanEmail)
