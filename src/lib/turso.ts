@@ -151,6 +151,39 @@ export async function initDatabase(): Promise<void> {
     // Ignore if column already exists
   }
 
+  try {
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS app_sessions (
+        token_hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `);
+    await turso.execute(`
+      CREATE INDEX IF NOT EXISTS app_sessions_user_id_idx ON app_sessions(user_id)
+    `);
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS app_credentials (
+        user_id TEXT PRIMARY KEY,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `);
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS login_attempts (
+        identifier_hash TEXT PRIMARY KEY,
+        failed_attempts INTEGER NOT NULL,
+        window_started_at TEXT NOT NULL,
+        locked_until TEXT,
+        updated_at TEXT NOT NULL
+      )
+    `);
+  } catch (e) {
+    console.error('Error creating auth tables:', e);
+  }
+
   // Clean any legacy profiles or portfolios belonging to lecturers
   await cleanLecturerProfilesAndPortfolios();
 }
