@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
 import { turso, initDatabase, ensureUserProfileAndPortfolio, queryAuthDb } from '@/lib/turso';
 
 export async function GET() {
@@ -9,11 +8,10 @@ export async function GET() {
 
     // Auto-provision profile ONLY for students if they don't have one yet
     try {
-      const session = await getServerSession(authOptions);
-      if (session?.user) {
-        const u = session.user as any;
-        if (u.role === 'student') {
-          await ensureUserProfileAndPortfolio(String(u.id), String(u.name || u.email || 'User'));
+      const user = await getSessionUser();
+      if (user) {
+        if (user.role === 'student') {
+          await ensureUserProfileAndPortfolio(String(user.id), String(user.name || user.email || 'User'));
         }
       }
     } catch (provErr) {

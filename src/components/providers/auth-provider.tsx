@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { signIn, signOut } from 'next-auth/react';
 
 export interface User {
   id: string;
@@ -53,27 +52,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (username: string, pass: string, onLoginSuccess: (user: User) => Promise<void>): Promise<boolean> => {
     try {
-      const res = await signIn('credentials', {
-        redirect: false,
-        username,
-        password: pass,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password: pass }),
       });
 
-      if (res?.error) {
+      if (!res.ok) {
         return false;
       }
 
-      const sessionRes = await fetch('/api/auth/session');
-      if (sessionRes.ok) {
-        const session = await sessionRes.json();
-        if (session?.user) {
-          setIsLoggedIn(true);
-          setCurrentUser(session.user);
-          localStorage.setItem('portfolio_hub_auth', 'true');
-          localStorage.setItem('portfolio_hub_user', JSON.stringify(session.user));
-          await onLoginSuccess(session.user);
-          return true;
-        }
+      const data = await res.json();
+      if (data?.ok && data?.user) {
+        setIsLoggedIn(true);
+        setCurrentUser(data.user);
+        localStorage.setItem('portfolio_hub_auth', 'true');
+        localStorage.setItem('portfolio_hub_user', JSON.stringify(data.user));
+        await onLoginSuccess(data.user);
+        return true;
       }
       return false;
     } catch (e) {
@@ -83,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    await signOut({ redirect: false });
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     setIsLoggedIn(false);
     setCurrentUser(null);
     localStorage.removeItem('portfolio_hub_auth');

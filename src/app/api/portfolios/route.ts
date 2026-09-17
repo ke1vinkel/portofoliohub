@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
 import { turso, initDatabase } from '@/lib/turso';
 
 export async function POST(req: Request) {
   try {
     await initDatabase();
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    const user = await getSessionUser();
+    const userId = user?.id;
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { usePortfolio } from '@/components/providers/portfolio-provider';
 import { Button } from './Button';
 
 export const Navbar = () => {
-  const { data: session } = useSession();
+  const { isLoggedIn, currentUser, logout } = usePortfolio();
 
   return (
     <nav className="bg-white shadow-md">
@@ -15,7 +15,7 @@ export const Navbar = () => {
         </Link>
         
         <div className="flex items-center gap-4">
-          {session ? (
+          {isLoggedIn ? (
             <>
               <Link href="/dashboard">
                 <span className="text-gray-700 hover:text-blue-600">Dashboard</span>
@@ -26,12 +26,12 @@ export const Navbar = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => signOut()}
+                onClick={() => logout()}
               >
                 Sign Out
               </Button>
               <span className="text-sm text-gray-600">
-                {session.user?.name}
+                {currentUser?.name}
               </span>
             </>
           ) : (

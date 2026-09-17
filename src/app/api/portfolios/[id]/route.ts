@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/auth';
 import { turso, initDatabase } from '@/lib/turso';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await initDatabase();
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    const user = await getSessionUser();
+    const userId = user?.id;
     const { id } = await params;
 
     if (!userId) {
@@ -51,8 +50,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await initDatabase();
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    const user = await getSessionUser();
+    const userId = user?.id;
     const { id } = await params;
 
     if (!userId) {
