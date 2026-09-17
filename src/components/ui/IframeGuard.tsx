@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -8,20 +8,22 @@ interface IframeGuardProps {
   children: React.ReactNode;
 }
 
-export function IframeGuard({ children }: IframeGuardProps) {
-  const [isFramed, setIsFramed] = useState<boolean | null>(null);
-  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000';
+function checkIsFramed(): boolean {
+  try {
+    return window.self !== window.top;
+  } catch {
+    // Cross-origin iframe security exception means it is framed
+    return true;
+  }
+}
 
-  useEffect(() => {
-    // Check if running inside an iframe (window.self !== window.top)
-    try {
-      const inIframe = window.self !== window.top;
-      setIsFramed(inIframe);
-    } catch (e) {
-      // In case of cross-origin iframe security exceptions, it is framed
-      setIsFramed(true);
-    }
-  }, []);
+export function IframeGuard({ children }: IframeGuardProps) {
+  const isFramed = useSyncExternalStore<boolean | null>(
+    () => () => undefined,
+    checkIsFramed,
+    () => null
+  );
+  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3000';
 
   // Avoid hydration mismatch/flashing during initial load
   if (isFramed === null) {

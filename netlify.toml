@@ -3,5 +3,6 @@
   publish = ".next"
 
 [build.environment]
-  # Exclude public client-side environment variables from Netlify's secret scanner
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_PORTAL_URL"
+  # Exclude non-secret URLs and config variables from Netlify's secret scanner
+  SECRETS_SCAN_OMIT_KEYS = "ALLOWED_FRAME_ANCESTORS,NEXT_PUBLIC_PORTAL_URL"
+
