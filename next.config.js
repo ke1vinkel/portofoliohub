@@ -18,11 +18,12 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   poweredByHeader: false,
-  output: "standalone",
+  output: process.env.DOCKER_BUILD ? "standalone" : undefined,
   experimental: {
     serverActions: {
       allowedOrigins: [
         "localhost:3000",
+        "*.netlify.app",
         "*.gitlink.app",
         "*.google.com",
         "*.googleusercontent.com",
