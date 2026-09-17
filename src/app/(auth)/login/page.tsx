@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { GithubIcon, LinkedinIcon } from '@/components/ui/SocialIcons';
+import { IframeGuard } from '@/components/ui/IframeGuard';
 
 export default function LoginPage() {
   const { login, isLoggedIn, currentUser } = usePortfolio();
@@ -62,7 +63,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="grid min-h-[100dvh] lg:grid-cols-[0.7fr_1.3fr] xl:grid-cols-[0.66fr_1.34fr]">
+    <IframeGuard>
+      <main className="grid min-h-[100dvh] lg:grid-cols-[0.7fr_1.3fr] xl:grid-cols-[0.66fr_1.34fr]">
       {/* Left Column: Sign-in form */}
       <section className="ui-page-enter flex min-h-[100dvh] flex-col px-6 py-6 sm:px-10 sm:py-8 lg:px-12">
         <div className="flex items-center justify-between">
@@ -366,5 +368,6 @@ export default function LoginPage() {
         </p>
       </aside>
     </main>
+    </IframeGuard>
   );
 }
